@@ -1,0 +1,2 @@
+-- 20261031050806 oto_shipments_and_verified_events
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

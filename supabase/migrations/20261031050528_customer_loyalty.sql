@@ -1,0 +1,2 @@
+-- 20261031050528 customer_loyalty
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

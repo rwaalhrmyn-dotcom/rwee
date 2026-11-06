@@ -1,0 +1,2 @@
+-- 20261031045601 initial_commerce
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

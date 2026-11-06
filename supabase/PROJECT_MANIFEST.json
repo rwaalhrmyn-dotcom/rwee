@@ -1,0 +1,91 @@
+{
+  "project": "رواء الحرمين / riwa-alharamain",
+  "supabase_project_ref": "zyfrdlqjmuapkvhrdihn",
+  "urls": {
+    "main": "https://riwa-alharamain.mshykhynasr070.chatgpt.site/",
+    "supplier": "https://riwa-supplier.mshykhynasr070.chatgpt.site/",
+    "customer": "https://riwa-customer.mshykhynasr070.chatgpt.site/",
+    "admin": "https://riwa-admin.mshykhynasr070.chatgpt.site/"
+  },
+  "edge_functions": [
+    {
+      "name": "authentica-send-sms",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "authentica-send-email",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "oto-operation",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "oto-webhook",
+      "status": "ACTIVE"
+    }
+  ],
+  "migrations": [
+    {
+      "version": "20261031045601",
+      "name": "initial_commerce"
+    },
+    {
+      "version": "20261031045607",
+      "name": "suppliers_and_facility_needs"
+    },
+    {
+      "version": "20261031045634",
+      "name": "order_customization"
+    },
+    {
+      "version": "20261031050045",
+      "name": "separate_portal_access"
+    },
+    {
+      "version": "20261031050528",
+      "name": "customer_loyalty"
+    },
+    {
+      "version": "20261031050538",
+      "name": "required_receipt_after_payment"
+    },
+    {
+      "version": "20261031050707",
+      "name": "supplier_inventory_management"
+    },
+    {
+      "version": "20261031050713",
+      "name": "western_region_cities"
+    },
+    {
+      "version": "20261031050728",
+      "name": "verified_account_sessions"
+    },
+    {
+      "version": "20261031050757",
+      "name": "verified_phone_authentica"
+    },
+    {
+      "version": "20261031050806",
+      "name": "oto_shipments_and_verified_events"
+    },
+    {
+      "version": "20261031052209",
+      "name": "streamline_read_policies_and_shipment_events"
+    },
+    {
+      "version": "20261104202728",
+      "name": "supplier_electronic_contracts"
+    },
+    {
+      "version": "20261104205854",
+      "name": "admin_security_foundation"
+    },
+    {
+      "version": "20261105144138",
+      "name": "admin_password_login_policy"
+    }
+  ],
+  "disclaimer": "Metadata only. Does not contain source code, database contents, or secrets."
+}

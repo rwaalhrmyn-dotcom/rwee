@@ -1,3 +1,2 @@
-# oto-operation (Edge Function)
-وظيفة شحن OTO. body: { shipment_id, action }.
+# oto-operation (Edge Function, ACTIVE)
 المصدر الفعلي يُسحب بـ: supabase functions download oto-operation

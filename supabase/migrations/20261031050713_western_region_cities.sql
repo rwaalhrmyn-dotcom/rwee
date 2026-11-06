@@ -1,0 +1,2 @@
+-- 20261031050713 western_region_cities
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

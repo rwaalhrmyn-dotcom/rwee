@@ -1,0 +1,2 @@
+-- 20261031050728 verified_account_sessions
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

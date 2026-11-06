@@ -1,0 +1,2 @@
+-- 20261104202728 supplier_electronic_contracts
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

@@ -1,0 +1,2 @@
+-- 20261031050045 separate_portal_access
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

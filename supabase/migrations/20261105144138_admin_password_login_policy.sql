@@ -1,0 +1,2 @@
+-- 20261105144138 admin_password_login_policy
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

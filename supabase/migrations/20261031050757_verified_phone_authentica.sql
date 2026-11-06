@@ -1,0 +1,2 @@
+-- 20261031050757 verified_phone_authentica
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

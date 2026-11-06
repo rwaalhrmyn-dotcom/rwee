@@ -1,0 +1,2 @@
+-- 20261104205854 admin_security_foundation
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

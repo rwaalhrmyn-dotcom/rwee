@@ -1,0 +1,2 @@
+-- 20261031045607 suppliers_and_facility_needs
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

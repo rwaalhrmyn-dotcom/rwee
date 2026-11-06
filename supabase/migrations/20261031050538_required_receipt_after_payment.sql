@@ -1,0 +1,2 @@
+-- 20261031050538 required_receipt_after_payment
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

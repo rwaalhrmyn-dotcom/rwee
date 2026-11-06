@@ -1,0 +1,2 @@
+-- 20261031050707 supplier_inventory_management
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)

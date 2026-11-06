@@ -1,0 +1,2 @@
+-- 20261031052209 streamline_read_policies_and_shipment_events
+-- محتوى فعلي يُسحب بـ: supabase db dump (انظر ../README.md)
