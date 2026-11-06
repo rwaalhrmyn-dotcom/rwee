@@ -14,6 +14,7 @@ export default function Layout() {
             <NavLink to="/business">توريد الجمعيات الخيرية</NavLink>
             <NavLink to="/needs">احتياجات الجمعية</NavLink>
             <NavLink to="/suppliers">الموردون</NavLink>
+            <NavLink to="/compare">مقارنة الموردين</NavLink>
             <NavLink to="/gifts">أهدِ من تحب</NavLink>
             <NavLink to="/cart">السلة</NavLink>
             <NavLink to="/customer">حسابي</NavLink>
@@ -45,6 +46,7 @@ export default function Layout() {
               <h4>حسابك</h4>
               <Link to="/customer">طلباتي</Link>
               <Link to="/loyalty">مكافآت رِواء</Link>
+              <Link to="/delivery">توثيق التسليم</Link>
               <Link to="/customer/login">تسجيل الدخول</Link>
             </div>
             <div>
