@@ -19,6 +19,9 @@ import SupplierRegister from './pages/supplier/SupplierRegister'
 import SupplierInventory from './pages/supplier/SupplierInventory'
 import SupplierOrders from './pages/supplier/SupplierOrders'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import OrderDetail from './pages/customer/OrderDetail'
+import Loyalty from './pages/customer/Loyalty'
+import SupplierContract from './pages/supplier/SupplierContract'
 import { CartProvider } from './context/CartContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -42,6 +45,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/supplier/inventory" element={<SupplierInventory />} />
             <Route path="/supplier/orders" element={<SupplierOrders />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/customer/orders/:id" element={<OrderDetail />} />
+            <Route path="/loyalty" element={<Loyalty />} />
+            <Route path="/supplier/contract" element={<SupplierContract />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

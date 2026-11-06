@@ -13,6 +13,7 @@ export default function Layout() {
             <NavLink to="/suppliers">الموردون</NavLink>
             <NavLink to="/cart">السلة</NavLink>
             <NavLink to="/customer">حسابي</NavLink>
+            <NavLink to="/loyalty">مكافآت رِواء</NavLink>
             <NavLink to="/supplier">بوابة المورد</NavLink>
             <NavLink to="/admin">الإدارة</NavLink>
           </nav>

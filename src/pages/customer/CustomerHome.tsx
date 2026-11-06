@@ -32,11 +32,11 @@ export default function CustomerHome() {
       {orders.length === 0 ? <p className="muted">لا توجد طلبات بعد.</p> : (
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))' }}>
           {orders.map(o => (
-            <div className="card" key={o.id}>
+            <Link className="card" to={`/customer/orders/${o.id}`} key={o.id} style={{display:"block"}}>
               <span className="badge">{o.status}</span>
               <div className="price" style={{ marginTop: 8 }}>{sar((o.subtotal_halalas||0)+(o.delivery_halalas||0))}</div>
               <div className="muted" style={{ fontSize: 13 }}>{new Date(o.created_at).toLocaleDateString('ar-SA')}</div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
