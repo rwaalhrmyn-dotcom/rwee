@@ -33,10 +33,13 @@ import Needs from './pages/Needs'
 import DeliveryDocs from './pages/customer/DeliveryDocs'
 import CompareSuppliers from './pages/CompareSuppliers'
 import { CartProvider } from './context/CartContext'
+import Join from './pages/Join'
+import { LanguageProvider } from './lib/i18n'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <CartProvider>
+    <LanguageProvider>
+      <CartProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -71,10 +74,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/delivery" element={<DeliveryDocs />} />
             <Route path="/customer/delivery" element={<DeliveryDocs />} />
             <Route path="/compare" element={<CompareSuppliers />} />
+            <Route path="/join" element={<Join />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </CartProvider>
+    </LanguageProvider>
   </React.StrictMode>,
 )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from '../lib/i18n'
 
 const CHIPS = [
   { t: 'أحتاج مياه', q: 'مياه' },
@@ -23,18 +24,19 @@ export default function RawaaAssistant() {
   const [q, setQ] = useState('')
   const [ans, setAns] = useState<{ text: string; to?: string } | null>(null)
   const nav = useNavigate()
+  const { t } = useI18n()
   const ask = (text: string) => { const a = answer(text); setAns(a) }
   return (
     <div className="assistant">
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontSize: 22 }}>✦</span>
-        <div><strong style={{ color: 'var(--green)' }}>مساعد رِواء الذكي</strong>
-          <div className="muted" style={{ fontSize: 13 }}>قل لنا ما تحتاجه، ودعنا نساعدك في الاختيار.</div></div>
+        <div><strong style={{ color: 'var(--green)' }}>{t('asstTitle')}</strong>
+          <div className="muted" style={{ fontSize: 13 }}>{t('asstSub')}</div></div>
       </div>
       <div className="row">
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && ask(q)}
-          placeholder="اسأل عن المياه، المصاحف، أو متابعة طلبك…" />
-        <button className="btn" onClick={() => ask(q)}>اسأل ←</button>
+          placeholder={t('asstPlaceholder')} />
+        <button className="btn" onClick={() => ask(q)}>{t('ask')}</button>
       </div>
       <div className="chips">
         {CHIPS.map(c => <span key={c.t} className="chip" onClick={() => { setQ(c.t); ask(c.q) }}>{c.t}</span>)}
@@ -42,7 +44,7 @@ export default function RawaaAssistant() {
       {ans && (
         <div className="ans">
           {ans.text}
-          {ans.to && <div style={{ marginTop: 8 }}><button className="btn ghost" style={{ padding: '6px 16px' }} onClick={() => nav(ans.to!)}>اذهب ←</button></div>}
+          {ans.to && <div style={{ marginTop: 8 }}><button className="btn ghost" style={{ padding: '6px 16px' }} onClick={() => nav(ans.to!)}>{t('go')}</button></div>}
         </div>
       )}
     </div>

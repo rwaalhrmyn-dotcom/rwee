@@ -91,3 +91,20 @@ a{color:inherit;text-decoration:none}
   .m-menu .lbl{font-size:12px;color:var(--muted);padding:10px 4px 2px;font-weight:600}
   .m-menu a:hover{color:var(--green)}
 }
+
+/* ===== Language switcher + responsive polish ===== */
+.langbtn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:12px;height:42px;padding:0 12px;cursor:pointer;font-family:inherit;font-size:14px;color:var(--deep)}
+.langbtn:hover{border-color:var(--green);color:var(--green)}
+.langmenu{position:absolute;inset-inline-end:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 34px rgba(7,60,49,.14);padding:6px;min-width:150px;z-index:60}
+.langmenu button{display:block;width:100%;text-align:start;background:none;border:0;padding:9px 12px;border-radius:9px;font-family:inherit;font-size:14px;color:var(--deep);cursor:pointer}
+.langmenu button:hover,.langmenu button.on{background:var(--soft);color:var(--green)}
+/* keep header on one line, let menu scroll on mid widths */
+@media(min-width:1001px) and (max-width:1200px){.nav2 .item>a,.nav2 .item>button{padding:9px 9px;font-size:14px}}
+
+@media(max-width:1000px){
+  .nav2 .bar{height:auto;min-height:64px;padding:10px 0;gap:10px}
+  .brand{font-size:18px}
+  .brand small{font-size:10px}
+  .nav2 .right{gap:6px}
+  .langbtn span:not(.caret){display:none}
+}
