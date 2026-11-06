@@ -26,3 +26,9 @@ Hostinger (shared) · المستخدم `u381823366` · 4 مواقع كلها ن�
 
 ## لم يُنفَّذ أي تعديل
 لم تُكتب أو تُحذف أي بيانات على أي مشروع Supabase ولا على الاستضافة. قراءة فقط + سحب نسخة.
+
+## مراجعة وإصلاح (نفس اليوم)
+- قُلّم `dist/` ليطابق موقع الإنتاج `rwaalhrmyn.store` بالضبط: index.html + index-TW1Gmtf4.js + index-sRk8resP.css + browser-BEwlWy-4.js + hero.png + favicon.svg + .htaccess.
+- نُقلت حزم النطاقات الفرعية الثلاثة (نسخ أقدم من نفس التطبيق) إلى `hostinger-variants/` للأرشفة.
+- تحقّق محلي: الخدمة الثابتة تُركّب التطبيق (#root=40353 بايت، 0 أخطاء console) مطابقةً للإنتاج.
+- ملاحظة: الروابط العميقة (/admin، /supplier…) تحتاج خادماً يعيد التوجيه لـ index.html؛ `.htaccess` يفعل ذلك على Apache/Hostinger.
