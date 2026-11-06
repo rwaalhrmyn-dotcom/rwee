@@ -25,3 +25,7 @@ cd dist && python3 -m http.server 8080
 
 ## إعادة النشر على Hostinger
 محتوى `dist/` يُرفع إلى `/home/u381823366/domains/rwaalhrmyn.store/public_html/`.
+
+
+## الواجهة الأمامية (معاد بناؤها)
+مصدر React/TS قابل للتعديل والبناء في `src/` — انظر `BUILD.md`. النسخة الأصلية المنشورة محفوظة في `reference/live-hostinger-build/`.
