@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
         threeDSecure: true, save_card: false,
         description: `Order ${orderId}`,
         reference: { order: orderId },
+        order: { id: orderId },
         metadata: { order_id: orderId },
         redirect: { url: `${siteUrl}/payment/callback?order=${orderId}` },
         post: { url: `${supaUrl}/functions/v1/tap-webhook` },
