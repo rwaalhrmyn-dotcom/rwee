@@ -11,6 +11,7 @@ export default function Layout() {
             <NavLink to="/" end>الرئيسية</NavLink>
             <NavLink to="/products">تسوّق المنتجات</NavLink>
             <NavLink to="/suppliers">الموردون</NavLink>
+            <NavLink to="/gifts">أهدِ من تحب</NavLink>
             <NavLink to="/cart">السلة</NavLink>
             <NavLink to="/customer">حسابي</NavLink>
             <NavLink to="/loyalty">مكافآت رِواء</NavLink>
@@ -21,7 +22,37 @@ export default function Layout() {
       </header>
       <main className="container"><Outlet /></main>
       <footer className="footer">
-        <div className="container">© رِواء الحرمين — مكة والمدينة وجدة والطائف · بيانات طلبك تبقى خاصة</div>
+        <div className="container">
+          <div className="ftr-grid">
+            <div>
+              <div className="brand" style={{ marginBottom: 8 }}>رِواء الحرمين</div>
+              <p className="muted" style={{ margin: 0, maxWidth: 320 }}>سوق المياه والمصاحف ومستلزمات المساجد في مكة والمدينة وجدة والطائف، مع خدمات توصيل موثوقة.</p>
+            </div>
+            <div>
+              <h4>التسوّق</h4>
+              <Link to="/products">المنتجات</Link>
+              <Link to="/suppliers">الموردون</Link>
+              <Link to="/gifts">أهدِ من تحب</Link>
+              <Link to="/cart">السلة</Link>
+            </div>
+            <div>
+              <h4>حسابك</h4>
+              <Link to="/customer">طلباتي</Link>
+              <Link to="/loyalty">مكافآت رِواء</Link>
+              <Link to="/customer/login">تسجيل الدخول</Link>
+            </div>
+            <div>
+              <h4>الشركاء</h4>
+              <Link to="/supplier">بوابة المورد</Link>
+              <Link to="/supplier/register">انضم كمورد</Link>
+              <Link to="/admin">الإدارة</Link>
+            </div>
+          </div>
+          <div className="ftr-bottom">
+            <span>© {new Date().getFullYear()} رِواء الحرمين — جميع الحقوق محفوظة</span>
+            <span className="muted">مكة · المدينة · جدة · الطائف · بياناتك تبقى خاصة</span>
+          </div>
+        </div>
       </footer>
     </>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { sar, CATEGORIES } from '../lib/format'
 import { useCart } from '../context/CartContext'
@@ -9,7 +10,8 @@ export default function Products() {
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
-  const [cat, setCat] = useState<string>('')
+  const [params] = useSearchParams()
+  const [cat, setCat] = useState<string>(params.get('cat') || '')
   const { add } = useCart()
 
   useEffect(() => {
