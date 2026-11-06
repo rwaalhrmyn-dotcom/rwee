@@ -22,6 +22,8 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import OrderDetail from './pages/customer/OrderDetail'
 import Loyalty from './pages/customer/Loyalty'
 import SupplierContract from './pages/supplier/SupplierContract'
+import ProductForm from './pages/supplier/ProductForm'
+import Shipping from './pages/supplier/Shipping'
 import { CartProvider } from './context/CartContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -48,6 +50,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/customer/orders/:id" element={<OrderDetail />} />
             <Route path="/loyalty" element={<Loyalty />} />
             <Route path="/supplier/contract" element={<SupplierContract />} />
+            <Route path="/supplier/products/new" element={<ProductForm />} />
+            <Route path="/supplier/shipping" element={<Shipping />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
