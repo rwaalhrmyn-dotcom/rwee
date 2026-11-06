@@ -34,7 +34,8 @@ export default function SupplierHome() {
             <div className="badge" style={{ marginTop: 8 }}>{a.approval_status || a.status || ''}</div></div>
         ))}
       </div>
-      <button className="btn ghost" style={{ marginTop: 20 }} onClick={() => supabase.auth.signOut().then(() => location.reload())}>تسجيل الخروج</button>
+      <div style={{display:"flex",gap:8,margin:"16px 0"}}><Link className="btn" to="/supplier/inventory">المخزون</Link><Link className="btn ghost" to="/supplier/orders">الطلبات</Link><Link className="btn ghost" to="/supplier/register">انضمام</Link></div>
+      <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut().then(() => location.reload())}>تسجيل الخروج</button>
     </section>
   )
 }

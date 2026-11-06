@@ -13,7 +13,7 @@ export default function CustomerHome() {
       setAuthed(!!session)
       if (session) {
         setEmail(session.user.phone || session.user.email || null)
-        const { data } = await supabase.from('orders').select('id,status,total_halalas,created_at').order('created_at', { ascending: false }).limit(10)
+        const { data } = await supabase.from('orders').select('id,status,subtotal_halalas,delivery_halalas,created_at').order('created_at', { ascending: false }).limit(10)
         setOrders(data || [])
       }
     })()
@@ -34,7 +34,7 @@ export default function CustomerHome() {
           {orders.map(o => (
             <div className="card" key={o.id}>
               <span className="badge">{o.status}</span>
-              <div className="price" style={{ marginTop: 8 }}>{sar(o.total_halalas)}</div>
+              <div className="price" style={{ marginTop: 8 }}>{sar((o.subtotal_halalas||0)+(o.delivery_halalas||0))}</div>
               <div className="muted" style={{ fontSize: 13 }}>{new Date(o.created_at).toLocaleDateString('ar-SA')}</div>
             </div>
           ))}

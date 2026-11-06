@@ -14,6 +14,11 @@ import SupplierLogin from './pages/supplier/SupplierLogin'
 import SupplierHome from './pages/supplier/SupplierHome'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminHome from './pages/admin/AdminHome'
+import Checkout from './pages/Checkout'
+import SupplierRegister from './pages/supplier/SupplierRegister'
+import SupplierInventory from './pages/supplier/SupplierInventory'
+import SupplierOrders from './pages/supplier/SupplierOrders'
+import AdminDashboard from './pages/admin/AdminDashboard'
 import { CartProvider } from './context/CartContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -32,6 +37,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/supplier/login" element={<SupplierLogin />} />
             <Route path="/admin" element={<AdminHome />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/supplier/register" element={<SupplierRegister />} />
+            <Route path="/supplier/inventory" element={<SupplierInventory />} />
+            <Route path="/supplier/orders" element={<SupplierOrders />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

@@ -24,7 +24,7 @@ export default function Cart() {
             <span>الإجمالي</span><span className="price">{sar(total)}</span>
           </div>
           <div className="note" style={{ marginTop: 14 }}>إتمام الطلب يتطلب تسجيل دخول العميل عبر رمز التحقق. <Link to="/customer/login" style={{ color: 'var(--green)' }}>سجّل الدخول ←</Link></div>
-          <button className="btn ghost" style={{ marginTop: 12 }} onClick={clear}>تفريغ السلة</button>
+          <div style={{ display:'flex', gap:8, marginTop:12 }}><Link className="btn" to="/checkout">إتمام الطلب ←</Link><button className="btn ghost" onClick={clear}>تفريغ السلة</button></div>
         </div>
       )}
     </section>

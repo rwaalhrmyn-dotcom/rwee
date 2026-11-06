@@ -31,7 +31,8 @@ export default function AdminHome() {
         <strong>جلسة إدارية موثّقة</strong>
         <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--muted)' }}>{JSON.stringify(me, null, 2)}</pre>
       </div>}
-      <button className="btn ghost" style={{ marginTop: 20 }} onClick={() => supabase.auth.signOut().then(() => location.reload())}>تسجيل الخروج</button>
+      <div style={{margin:"16px 0"}}><Link className="btn" to="/admin/dashboard">لوحة التحكم الكاملة ←</Link></div>
+      <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut().then(() => location.reload())}>تسجيل الخروج</button>
     </section>
   )
 }
