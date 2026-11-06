@@ -32,7 +32,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'اسأل عن المياه، المصاحف، أو متابعة طلبك…', ask: 'اسأل ←', go: 'اذهب ←',
     ftrAbout: 'منصة غير ربحية تُعنى بتوفير المياه والمصاحف ومستلزمات المساجد وإيصالها بعناية، خدمةً لبيوت الله وقاصديها، بلا هدف تجاري.',
     ftrProducts: 'المنتجات', ftrSuppliersOrgs: 'الموردون والجمعيات', ftrAccount: 'حسابك',
-    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة',
+    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة', about: 'عن المنصة',
     cities: 'منصة غير ربحية · بياناتك تبقى خاصة',
   },
   en: {
@@ -55,7 +55,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Ask about water, Qurans, or track your order…', ask: 'Ask →', go: 'Go →',
     ftrAbout: 'A non-profit platform that provides water, Qurans and mosque supplies and delivers them with care, in service of the houses of Allah and their visitors.',
     ftrProducts: 'Products', ftrSuppliersOrgs: 'Suppliers & charities', ftrAccount: 'Your account',
-    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved',
+    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved', about: 'About',
     cities: 'A non-profit platform · your data stays private',
   },
   ur: {
@@ -76,7 +76,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'پانی، قرآن یا آرڈر ٹریک کے بارے میں پوچھیں…', ask: 'پوچھیں →', go: 'جائیں →',
     ftrAbout: 'ایک غیر منافع بخش پلیٹ فارم جو پانی، قرآن اور مسجد کا سامان فراہم اور خیال سے پہنچاتا ہے۔',
     ftrProducts: 'مصنوعات', ftrSuppliersOrgs: 'سپلائرز و ادارے', ftrAccount: 'آپ کا اکاؤنٹ',
-    myOrders: 'میرے آرڈرز', terms: 'پالیسی و رازداری', rights: 'جملہ حقوق محفوظ ہیں',
+    myOrders: 'میرے آرڈرز', terms: 'پالیسی و رازداری', rights: 'جملہ حقوق محفوظ ہیں', about: 'ادارے کے بارے میں',
     cities: 'غیر منافع بخش پلیٹ فارم · آپ کا ڈیٹا محفوظ',
   },
   fr: {
@@ -97,7 +97,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Eau, Corans, suivi de commande…', ask: 'Demander →', go: 'Aller →',
     ftrAbout: 'Une plateforme à but non lucratif qui fournit eau, Corans et fournitures de mosquée et les livre avec soin.',
     ftrProducts: 'Produits', ftrSuppliersOrgs: 'Fournisseurs & associations', ftrAccount: 'Votre compte',
-    myOrders: 'Mes commandes', terms: 'Politique & confidentialité', rights: 'Tous droits réservés',
+    myOrders: 'Mes commandes', terms: 'Politique & confidentialité', rights: 'Tous droits réservés', about: 'À propos',
     cities: 'Plateforme à but non lucratif · vos données restent privées',
   },
   id: {
@@ -118,7 +118,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Tanya air, Alquran, atau lacak pesanan…', ask: 'Tanya →', go: 'Pergi →',
     ftrAbout: 'Platform nirlaba yang menyediakan air, Alquran, dan perlengkapan masjid serta mengantarnya dengan perhatian.',
     ftrProducts: 'Produk', ftrSuppliersOrgs: 'Pemasok & lembaga', ftrAccount: 'Akun Anda',
-    myOrders: 'Pesanan saya', terms: 'Kebijakan & privasi', rights: 'Hak cipta dilindungi',
+    myOrders: 'Pesanan saya', terms: 'Kebijakan & privasi', rights: 'Hak cipta dilindungi', about: 'Tentang',
     cities: 'Platform nirlaba · data Anda tetap privat',
   },
   tr: {
@@ -139,7 +139,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Su, Kuran veya sipariş takibi sorun…', ask: 'Sor →', go: 'Git →',
     ftrAbout: 'Su, Kuran ve cami malzemeleri sağlayan ve özenle ulaştıran, kâr amacı gütmeyen bir platform.',
     ftrProducts: 'Ürünler', ftrSuppliersOrgs: 'Tedarikçiler ve dernekler', ftrAccount: 'Hesabınız',
-    myOrders: 'Siparişlerim', terms: 'Politika ve gizlilik', rights: 'Tüm hakları saklıdır',
+    myOrders: 'Siparişlerim', terms: 'Politika ve gizlilik', rights: 'Tüm hakları saklıdır', about: 'Hakkında',
     cities: 'Kâr amacı gütmeyen platform · verileriniz gizli kalır',
   },
 }
