@@ -10,6 +10,9 @@ export default function Layout() {
           <nav className="navlinks">
             <NavLink to="/" end>الرئيسية</NavLink>
             <NavLink to="/products">تسوّق المنتجات</NavLink>
+            <NavLink to="/bundles">الباقات والتوريد الدوري</NavLink>
+            <NavLink to="/business">توريد الجمعيات الخيرية</NavLink>
+            <NavLink to="/needs">احتياجات الجمعية</NavLink>
             <NavLink to="/suppliers">الموردون</NavLink>
             <NavLink to="/gifts">أهدِ من تحب</NavLink>
             <NavLink to="/cart">السلة</NavLink>
@@ -33,6 +36,9 @@ export default function Layout() {
               <Link to="/products">المنتجات</Link>
               <Link to="/suppliers">الموردون</Link>
               <Link to="/gifts">أهدِ من تحب</Link>
+              <Link to="/bundles">الباقات والتوريد الدوري</Link>
+              <Link to="/business">توريد الجمعيات</Link>
+              <Link to="/needs">احتياجات الجمعية</Link>
               <Link to="/cart">السلة</Link>
             </div>
             <div>

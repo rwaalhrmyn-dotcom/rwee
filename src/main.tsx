@@ -27,6 +27,9 @@ import Shipping from './pages/supplier/Shipping'
 import Gifts from './pages/Gifts'
 import ImportProducts from './pages/supplier/ImportProducts'
 import Terms from './pages/Terms'
+import Bundles from './pages/Bundles'
+import Business from './pages/Business'
+import Needs from './pages/Needs'
 import { CartProvider } from './context/CartContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -60,6 +63,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/supplier/import" element={<ImportProducts />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Terms />} />
+            <Route path="/bundles" element={<Bundles />} />
+            <Route path="/business" element={<Business />} />
+            <Route path="/needs" element={<Needs />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
