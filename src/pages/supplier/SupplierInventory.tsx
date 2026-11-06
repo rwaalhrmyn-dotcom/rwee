@@ -29,7 +29,7 @@ export default function SupplierInventory() {
   if (authed === false) return <section style={{ padding: '32px 0' }}><p className="muted">سجّل الدخول كمورد. <Link to="/supplier/login" style={{ color: 'var(--green)' }}>دخول ←</Link></p></section>
   return (
     <section style={{ padding: '32px 0' }}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}><h2 style={{ color: 'var(--green)' }}>إدارة المنتجات والمخزون</h2><div style={{display:"flex",gap:8}}><Link className="btn" to="/supplier/products/new">+ منتج</Link><Link className="btn ghost" to="/supplier/shipping">الشحن</Link></div></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}><h2 style={{ color: 'var(--green)' }}>إدارة المنتجات والمخزون</h2><div style={{display:"flex",gap:8}}><Link className="btn" to="/supplier/products/new">+ منتج</Link><Link className="btn ghost" to="/supplier/import">استيراد Excel</Link><Link className="btn ghost" to="/supplier/shipping">الشحن</Link></div></div>
       {err && <div className="note">تعذّر الجلب: {err}</div>}
       {msg && <div className="note">{msg}</div>}
       {rows.length === 0 && !err && <p className="muted">لا منتجات بعد.</p>}

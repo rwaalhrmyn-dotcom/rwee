@@ -46,6 +46,7 @@ export default function Layout() {
               <Link to="/supplier">بوابة المورد</Link>
               <Link to="/supplier/register">انضم كمورد</Link>
               <Link to="/admin">الإدارة</Link>
+              <Link to="/terms">السياسة والخصوصية</Link>
             </div>
           </div>
           <div className="ftr-bottom">
