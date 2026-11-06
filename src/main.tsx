@@ -35,6 +35,7 @@ import CompareSuppliers from './pages/CompareSuppliers'
 import { CartProvider } from './context/CartContext'
 import Join from './pages/Join'
 import About from './pages/About'
+import PaymentCallback from './pages/PaymentCallback'
 import { LanguageProvider } from './lib/i18n'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -77,6 +78,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/compare" element={<CompareSuppliers />} />
             <Route path="/join" element={<Join />} />
             <Route path="/about" element={<About />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
