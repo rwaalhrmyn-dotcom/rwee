@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { sar } from '../../lib/format'
 
 export default function CustomerHome() {
+  const [params] = useSearchParams()
+  const placed = params.get('placed') === '1'
   const [email, setEmail] = useState<string | null>(null)
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [orders, setOrders] = useState<any[]>([])
@@ -28,6 +30,7 @@ export default function CustomerHome() {
   return (
     <section style={{ padding: '32px 0' }}>
       <h2 style={{ color: 'var(--green)' }}>مرحباً{email ? ` · ${email}` : ''}</h2>
+      {placed && <div className="note" style={{ marginBottom: 14 }}>تم استلام طلبك بنجاح ✅ سيتواصل معك فريقنا لإتمام الدفع والتوصيل.</div>}
       <h3>طلباتك الأخيرة</h3>
       {orders.length === 0 ? <p className="muted">لا توجد طلبات بعد.</p> : (
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))' }}>

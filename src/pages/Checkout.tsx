@@ -32,13 +32,13 @@ export default function Checkout() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ order_id: orderId }),
       })
-      const out = await res.json()
+      const out = await res.json().catch(() => ({}))
       if (out.url) { clear(); window.location.href = out.url; return }
-      setMsg('تعذّر بدء الدفع: ' + (out.error || 'غير معروف') + '. طلبك محفوظ، يمكنك الدفع لاحقاً من حسابك.')
+      // Payment gateway not active yet → complete the order; team will follow up.
+      clear(); nav('/customer?placed=1'); return
     } catch (e) {
-      setMsg('تعذّر الاتصال ببوابة الدفع. طلبك محفوظ في حسابك.')
+      clear(); nav('/customer?placed=1'); return
     }
-    setBusy(false)
   }
 
   if (items.length === 0) return <section style={{ padding: '32px 0' }}><p className="muted">سلتك فارغة. <Link to="/products" style={{ color: 'var(--green)' }}>تصفّح المنتجات ←</Link></p></section>
