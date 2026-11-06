@@ -4,10 +4,10 @@ import { createClient } from '@supabase/supabase-js'
 // القيم تُقرأ من متغيرات البيئة، مع قيمة افتراضية عامة للمشروع الإنتاجي.
 const url =
   import.meta.env.VITE_SUPABASE_URL ??
-  'https://zyfrdlqjmuapkvhrdihn.supabase.co'
+  'https://jtddvnmzoixsdhkvhdrl.supabase.co'
 const publishableKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  'sb_publishable_UcMK2-OVkvww7ioyJjt52A_s445iG0F'
+  'sb_publishable_wmzdNw0TQ97J85tL4I-rEw_4NjhUQi6'
 
 export const supabase = createClient(url, publishableKey, {
   auth: { persistSession: true, autoRefreshToken: true },
