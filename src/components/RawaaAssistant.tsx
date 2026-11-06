@@ -16,7 +16,7 @@ function answer(q: string): { text: string; to?: string } {
   if (/مستلزم|مسجد|سجاد|تجهيز/.test(s)) return { text: 'مستلزمات وتجهيزات المساجد في قسم المستلزمات.', to: '/products?cat=supplies' }
   if (/تتبع|توصيل|طلب|شحن|أين/.test(s)) return { text: 'تابع طلباتك وحالتها من صفحة حسابي.', to: '/customer' }
   if (/مورد|بائع|انضم/.test(s)) return { text: 'انضم كمورد وأدِر منتجاتك من بوابة المورد.', to: '/supplier' }
-  if (/هدية|أهدي|تصدق|صدقة/.test(s)) return { text: 'يمكنك الإهداء أو التصدّق لمن تحب.', to: '/gifts' }
+  if (/هدية|أهدي|تصدق|صدقة/.test(s)) return { text: 'يمكنك أن تُهدي من تحب.', to: '/gifts' }
   return { text: 'تصفّح جميع المنتجات، وسنساعدك في الوصول لما تحتاجه.', to: '/products' }
 }
 

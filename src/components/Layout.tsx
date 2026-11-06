@@ -139,6 +139,7 @@ export default function Layout() {
               <Link to="/customer">{t('myOrders')}</Link>
               <Link to="/loyalty">{t('loyalty')}</Link>
               <Link to="/delivery">{t('deliveryDocs')}</Link>
+              <Link to="/about">{t('about')}</Link>
               <Link to="/terms">{t('terms')}</Link>
             </div>
           </div>
