@@ -3,6 +3,7 @@ import { supabase, SUPABASE_URL } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
 import { useNavigate, Link } from 'react-router-dom'
+import MapsAddress from '../components/MapsAddress'
 
 export default function Checkout() {
   const { items, total, clear } = useCart()
@@ -51,7 +52,7 @@ export default function Checkout() {
           <select value={city} onChange={e => setCity(e.target.value)}>
             {Object.entries(CITIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div className="field"><label>العنوان التفصيلي</label><input value={address} onChange={e => setAddress(e.target.value)} placeholder="الحي، الشارع، رقم المبنى" /></div>
+        <div className="field"><label>العنوان التفصيلي</label><MapsAddress value={address} onChange={setAddress} /></div>
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, margin: '12px 0' }}>

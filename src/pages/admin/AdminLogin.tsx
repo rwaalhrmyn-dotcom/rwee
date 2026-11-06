@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import GoogleButton from '../../components/GoogleButton'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState('')
@@ -21,6 +22,8 @@ export default function AdminLogin() {
         <div className="field"><label>كلمة المرور</label><input value={password} onChange={e => setPassword(e.target.value)} type="password" /></div>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
         <button className="btn" style={{ width: '100%' }} disabled={busy || !email || !password} onClick={submit}>متابعة التحقق</button>
+        <div className="orsep">أو</div>
+        <GoogleButton redirect="/admin" label="دخول الإدارة عبر Google" />
         <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>استعادة كلمة المرور غير متاحة حتى اعتماد قناة البريد والتحقق منها.</p>
       </div>
     </section>

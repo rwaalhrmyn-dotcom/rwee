@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import RawaaAssistant from '../components/RawaaAssistant'
 import { useI18n } from '../lib/i18n'
+import { useSeo } from '../lib/seo'
 
 export default function Home() {
   const { t } = useI18n()
+  useSeo('منصة غير ربحية لخدمة بيوت الله','مياه ومصاحف ومستلزمات المساجد تصل بعناية — منصة غير ربحية بروح العطاء.')
   return (
     <>
       <div className="promo">

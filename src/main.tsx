@@ -37,6 +37,9 @@ import Join from './pages/Join'
 import About from './pages/About'
 import PaymentCallback from './pages/PaymentCallback'
 import { LanguageProvider } from './lib/i18n'
+import { initGA } from './lib/analytics'
+
+initGA()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

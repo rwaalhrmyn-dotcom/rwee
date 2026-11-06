@@ -108,3 +108,9 @@ a{color:inherit;text-decoration:none}
   .nav2 .right{gap:6px}
   .langbtn span:not(.caret){display:none}
 }
+
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;font-family:inherit;font-size:15px;font-weight:600;color:var(--deep);cursor:pointer}
+.gbtn:hover{border-color:var(--green);background:#fafdfb}
+.gbtn:disabled{opacity:.6;cursor:not-allowed}
+.orsep{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:16px 0}
+.orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--border)}

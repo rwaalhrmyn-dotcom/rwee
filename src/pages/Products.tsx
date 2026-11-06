@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { sar, CATEGORIES } from '../lib/format'
 import { useCart } from '../context/CartContext'
+import { useSeo } from '../lib/seo'
 
 type Product = { id: string; name: string; description: string; category: string; price_halalas: number; stock: number; unit: string; cities: string[] }
 
@@ -13,6 +14,7 @@ export default function Products() {
   const [params] = useSearchParams()
   const [cat, setCat] = useState<string>(params.get('cat') || '')
   const { add } = useCart()
+  useSeo('تسوّق المنتجات','المياه والمصاحف وحواملها ومستلزمات المساجد والتجهيزات — بأسعار واضحة وتوصيل موثوق.')
 
   useEffect(() => {
     (async () => {

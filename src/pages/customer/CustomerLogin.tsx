@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { CITIES } from '../../lib/format'
+import GoogleButton from '../../components/GoogleButton'
 
 type Mode = 'phone' | 'email'
 export default function CustomerLogin() {
@@ -60,6 +61,8 @@ export default function CustomerLogin() {
             <input value={id} onChange={e => setId(e.target.value)} placeholder={mode === 'phone' ? '05xxxxxxxx' : 'name@example.com'} type={mode === 'email' ? 'email' : 'text'} /></div>
           {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
           <button className="btn" style={{ width: '100%' }} disabled={busy || id.length < 5} onClick={send}>إرسال رمز التحقق ←</button>
+          <div className="orsep">أو</div>
+          <GoogleButton redirect="/customer" />
         </div>
       )}
       {step === 'verify' && (

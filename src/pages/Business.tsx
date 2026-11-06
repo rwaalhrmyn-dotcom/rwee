@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
+import { useSeo } from '../lib/seo'
 
 export default function Business() {
+  useSeo('توريد الجمعيات الخيرية','أسعار توريد خاصة وخدمات لوجستية للجمعيات والمنشآت الخيرية.')
   const [org, setOrg] = useState(''); const [phone, setPhone] = useState(''); const [city, setCity] = useState('makkah'); const [details, setDetails] = useState('')
   const [msg, setMsg] = useState<string | null>(null); const [ok, setOk] = useState(false); const [busy, setBusy] = useState(false)
   const submit = async () => {

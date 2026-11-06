@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
+import { useSeo } from '../lib/seo'
 export default function Gifts() {
+  useSeo('أهدِ من تحب','أهدِ مياهاً ومصاحف ومستلزمات باسم من تحب — عطاء يصل حيث الحاجة.')
   return (
     <section style={{ padding: '32px 0' }}>
       <div className="eyebrow">— أهدِ من تحب</div>
