@@ -60,3 +60,8 @@ Hostinger (shared) · المستخدم `u381823366` · 4 مواقع كلها ن�
 - ✅ **7 ترحيلات حقيقية بأجسامها** (SQL كامل): initial_commerce (19KB), suppliers_and_facility_needs, order_customization, separate_portal_access, customer_loyalty, required_receipt_after_payment, supplier_inventory_management.
 - ✅ **مصدر الوظائف الأربع** (index.ts) + deno.json.
 - ⚠️ **ناقص بعد:** 8 ترحيلات (ما زالت هياكل)، ومجلد `_shared/` للوظائف (تستورد منه، فلا تُنشر بدونه)، وكامل الواجهة الأمامية `src/`.
+
+## دمج الملفات المشتركة للوظائف (تصدير 2026-11-06)
+- ✅ أُضيف `supabase/functions/_shared/`: authentica.ts (7KB), oto-handler.ts (5KB), oto.ts (11.6KB).
+- الآن الوظائف الأربع مكتملة التبعيات وقابلة للنشر عبر `supabase functions deploy`.
+- ⚠️ يبقى ناقصاً: 8 ترحيلات، وكامل الواجهة الأمامية `src/`.
