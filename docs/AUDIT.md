@@ -43,3 +43,15 @@ Hostinger (shared) · المستخدم `u381823366` · 4 مواقع كلها ن�
 - ChatGPT أكّد رؤية المشروع الحيّ (15 ترحيلاً + 4 وظائف ACTIVE) لكنه **لم يستطع نقل الكود المصدري ولا الـ SQL** من واجهاته — مثل نتيجتنا تماماً.
 - المُضاف المفيد: `.env.example` بأسماء متغيرات البيئة الحقيقية (AUTHENTICA_*, OTO_*, SUPABASE_*). بلا أي قيم/أسرار.
 - **خلاصة قاطعة:** مصدر React/TS للبوابات الأربع والـ SQL الفعلي غير قابل للتصدير عبر ChatGPT ولا عبر تكاملاتي. الطريق الوحيد = وصول المالك عبر Supabase CLI.
+
+## استخراج حيّ عبر المفتاح السرّي (2026-11-06)
+تم استخراج البنية الحيّة من مشروع zyfrdlqjmuapkvhrdihn مباشرةً (قراءة فقط عبر PostgREST):
+- **17 جدولاً** بكامل الأعمدة والأنواع وNOT NULL والافتراضيات والمفاتيح الأساسية/الأجنبية → `supabase/schema/reconstructed_schema.sql` + `docs/SCHEMA.md`.
+- **30 دالة RPC** (أكثر من 25 المستخرجة سابقاً) → `docs/RPC_FUNCTIONS.md`.
+- **3 حاويات تخزين** → `supabase/STORAGE_BUCKETS.md` (منها `rwaa-project-source` الخاصة، **فارغة حالياً**).
+- بنية PostgREST الخام → `supabase/schema/postgrest_openapi.json`.
+
+**لا يزال ناقصاً (يحتاج Management API/PAT أو db dump):**
+- أجسام الترحيلات الـ15 الفعلية (جدول supabase_migrations غير مكشوف عبر REST).
+- مصدر الوظائف الأربع (authentica-send-sms/email, oto-operation, oto-webhook).
+- سياسات RLS، المشغّلات، قيود CHECK، الفهارس، وأجسام دوال RPC.
