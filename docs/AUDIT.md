@@ -55,3 +55,8 @@ Hostinger (shared) · المستخدم `u381823366` · 4 مواقع كلها ن�
 - أجسام الترحيلات الـ15 الفعلية (جدول supabase_migrations غير مكشوف عبر REST).
 - مصدر الوظائف الأربع (authentica-send-sms/email, oto-operation, oto-webhook).
 - سياسات RLS، المشغّلات، قيود CHECK، الفهارس، وأجسام دوال RPC.
+
+## دمج المصدر الخلفي الجزئي (تصدير ChatGPT 2026-11-06)
+- ✅ **7 ترحيلات حقيقية بأجسامها** (SQL كامل): initial_commerce (19KB), suppliers_and_facility_needs, order_customization, separate_portal_access, customer_loyalty, required_receipt_after_payment, supplier_inventory_management.
+- ✅ **مصدر الوظائف الأربع** (index.ts) + deno.json.
+- ⚠️ **ناقص بعد:** 8 ترحيلات (ما زالت هياكل)، ومجلد `_shared/` للوظائف (تستورد منه، فلا تُنشر بدونه)، وكامل الواجهة الأمامية `src/`.
