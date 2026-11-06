@@ -114,3 +114,13 @@ a{color:inherit;text-decoration:none}
 .gbtn:disabled{opacity:.6;cursor:not-allowed}
 .orsep{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:16px 0}
 .orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* ===== Payment methods bar (footer) ===== */
+.paybar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 4px}
+.paybar .lbl{color:var(--muted);font-size:13px;margin-inline-end:4px}
+.payicon{height:32px;display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-weight:700;color:#1a1a1a;line-height:1}
+.payicon.mada{color:#84B740}.payicon.mada b{color:#1a1a1a;font-weight:700}
+.payicon.visa{color:#1A1F71;font-style:italic;letter-spacing:.5px}
+.payicon.mc svg{height:20px}
+.payicon.apple{color:#000}
+.payicon.tap{color:#0a7d5a}

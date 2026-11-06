@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useI18n, LANGS } from '../lib/i18n'
+import PayMethods from './PayMethods'
 
 export default function Layout() {
   const { items } = useCart()
@@ -143,6 +144,7 @@ export default function Layout() {
               <Link to="/terms">{t('terms')}</Link>
             </div>
           </div>
+          <PayMethods />
           <div className="ftr-bottom">
             <span>© {new Date().getFullYear()} رِواء الحرمين — {t('rights')}</span>
             <span className="muted">{t('cities')}</span>
