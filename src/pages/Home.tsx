@@ -5,16 +5,16 @@ import { useSeo } from '../lib/seo'
 
 export default function Home() {
   const { t } = useI18n()
-  useSeo('منصة غير ربحية لخدمة بيوت الله', 'مياه ومصاحف ومستلزمات المساجد تصل بعناية — منصة غير ربحية بروح العطاء.')
+  useSeo('توصيل المياه للمساجد والمنازل', 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد، بعناية وموثوقية.')
   const en = t('home') === 'Home'
   return (
     <>
       {/* بانر علوي جديد */}
       <div className="promo">
         <div>
-          <div className="eyebrow" style={{ color: 'var(--gold-2)' }}>{en ? '— A non-profit platform' : '— منصة غير ربحية'}</div>
+          <div className="eyebrow" style={{ color: 'var(--gold-2)' }}>{en ? '— Water delivery to mosques & homes' : '— توصيل المياه للمساجد والمنازل'}</div>
           <h3>{en ? 'Everything the sacred places need — delivered with care' : 'كل ما تحتاجه بيوت الله، يصل بعناية'}</h3>
-          <p>{en ? 'Water, Qurans and mosque supplies in one trusted experience — a spirit of giving, not profit.' : 'المياه والمصاحف ومستلزمات المساجد في تجربة واحدة موثوقة — بروح العطاء لا الربح.'}</p>
+          <p>{en ? 'A commercial platform specialized in delivering water to mosques and homes — with Qurans and mosque supplies too.' : 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل — مع المصاحف ومستلزمات المساجد.'}</p>
         </div>
         <Link className="btn" to="/products">{t('shopNow')}</Link>
       </div>
@@ -33,7 +33,7 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
             {[[en ? 'The two Harams' : 'الحرمان', en ? 'Makkah · Madinah' : 'مكة المكرمة · المدينة المنورة'],
-              [en ? 'Non-profit' : 'غير ربحية', en ? 'A spirit of giving' : 'بروح العطاء'],
+              [en ? 'Water delivery' : 'توصيل المياه', en ? 'To mosques & homes' : 'للمساجد والمنازل'],
               [en ? 'Trusted delivery' : 'توصيل موثوق', en ? 'From choice to door' : 'من الاختيار للباب']].map(([a, b]) => (
               <div key={a}><div style={{ fontWeight: 700, color: 'var(--green)', fontSize: 18 }}>{a}</div><div className="muted" style={{ fontSize: 13 }}>{b}</div></div>
             ))}
