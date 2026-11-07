@@ -28,8 +28,6 @@ import Gifts from './pages/Gifts'
 import ImportProducts from './pages/supplier/ImportProducts'
 import Terms from './pages/Terms'
 import Bundles from './pages/Bundles'
-import Business from './pages/Business'
-import Needs from './pages/Needs'
 import DeliveryDocs from './pages/customer/DeliveryDocs'
 import CompareSuppliers from './pages/CompareSuppliers'
 import { CartProvider } from './context/CartContext'
@@ -74,8 +72,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Terms />} />
             <Route path="/bundles" element={<Bundles />} />
-            <Route path="/business" element={<Business />} />
-            <Route path="/needs" element={<Needs />} />
             <Route path="/delivery" element={<DeliveryDocs />} />
             <Route path="/customer/delivery" element={<DeliveryDocs />} />
             <Route path="/compare" element={<CompareSuppliers />} />

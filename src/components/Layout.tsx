@@ -45,15 +45,6 @@ export default function Layout() {
                   <Link to="/supplier">{t('supplierPortal')}</Link>
                 </div>
               </div>
-              <div className="item">
-                <button>{t('orgsOffers')} <span className="caret">▾</span></button>
-                <div className="drop">
-                  <Link to="/business">{t('orgSupply')}</Link>
-                  <Link to="/business">{t('quote')}</Link>
-                  <Link to="/needs">{t('needs')}</Link>
-                  <div className="sep" /><Link to="/bundles">{t('bundles')}</Link>
-                </div>
-              </div>
               <div className="item"><NavLink to="/gifts">{t('gifts')}</NavLink></div>
               <div className="item"><NavLink to="/loyalty">{t('loyalty')}</NavLink></div>
             </nav>
@@ -98,9 +89,6 @@ export default function Layout() {
             <NavLink to="/suppliers">{t('suppliersList')}</NavLink>
             <NavLink to="/compare">{t('compare')}</NavLink>
             <NavLink to="/supplier/register">{t('joinSupplier')}</NavLink>
-            <div className="lbl">{t('orgsOffers')}</div>
-            <NavLink to="/business">{t('orgSupply')}</NavLink>
-            <NavLink to="/needs">{t('needs')}</NavLink>
             <div className="lbl">{t('account')}</div>
             <NavLink to="/gifts">{t('gifts')}</NavLink>
             <NavLink to="/loyalty">{t('loyalty')}</NavLink>
@@ -130,8 +118,7 @@ export default function Layout() {
               <h4>{t('ftrSuppliersOrgs')}</h4>
               <Link to="/suppliers">{t('suppliers')}</Link>
               <Link to="/compare">{t('compare')}</Link>
-              <Link to="/business">{t('orgSupply')}</Link>
-              <Link to="/needs">{t('needs')}</Link>
+              <Link to="/supplier/register">{t('joinSupplier')}</Link>
             </div>
             <div>
               <h4>{t('ftrAccount')}</h4>

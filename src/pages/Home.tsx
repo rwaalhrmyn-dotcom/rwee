@@ -13,7 +13,7 @@ export default function Home() {
       <div className="promo">
         <div>
           <div className="eyebrow" style={{ color: 'var(--gold-2)' }}>{en ? '— Water delivery to mosques & homes' : '— توصيل المياه للمساجد والمنازل'}</div>
-          <h3>{en ? 'Everything the sacred places need — delivered with care' : 'كل ما تحتاجه بيوت الله، يصل بعناية'}</h3>
+          <h3>{en ? 'Everything you need — delivered with care' : 'كل ما تحتاجه يصل بعناية'}</h3>
           <p>{en ? 'A commercial platform specialized in delivering water to mosques and homes — with Qurans and mosque supplies too.' : 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل — مع المصاحف ومستلزمات المساجد.'}</p>
         </div>
         <Link className="btn" to="/products">{t('shopNow')}</Link>

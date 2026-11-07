@@ -17,7 +17,7 @@ export default function Bundles() {
     <section style={{ padding: '32px 0', maxWidth: 560 }}>
       <div className="eyebrow">— توريد منتظم بلا انقطاع</div>
       <h2 style={{ color: 'var(--green)' }}>الباقات والتوريد الدوري</h2>
-      <p className="muted">اطلب توريداً أسبوعياً أو شهرياً لاحتياجات جمعيتك أو منشأتك، ونتكفّل بالباقي.</p>
+      <p className="muted">اطلب توريداً أسبوعياً أو شهرياً لاحتياجاتك أو منشأتك، ونتكفّل بالباقي.</p>
       <div className="card">
         <div className="field"><label>التكرار</label>
           <select value={frequency} onChange={e => setFrequency(e.target.value)}>
