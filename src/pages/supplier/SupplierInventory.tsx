@@ -38,7 +38,8 @@ export default function SupplierInventory() {
           <div className="card" key={p.id}>
             <span className="badge">{CATEGORIES[p.category] || p.category}</span>
             <h3 style={{ margin: '8px 0 4px' }}>{p.name}</h3>
-            <div className="price">{sar(p.price_halalas)}</div>
+            <div className="price">{sar(p.supplier_price_halalas ?? p.price_halalas)}</div>
+            <div className="muted" style={{ fontSize: 12, margin: '2px 0' }}>صافي سعرك · العرض للعميل {sar(p.price_halalas)}</div>
             <div className="muted" style={{ fontSize: 13, margin: '6px 0' }}>المخزون: {p.stock}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn ghost" style={{ padding: '6px 14px' }} onClick={() => adjust(p, -1)}>−</button>

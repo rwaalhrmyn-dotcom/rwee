@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase, SUPABASE_URL } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
@@ -15,6 +15,14 @@ export default function Checkout() {
   const [busy, setBusy] = useState(false)
   const nav = useNavigate()
 
+  // prefill returning customer's saved details
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('profiles').select('full_name,phone,city').maybeSingle()
+      if (data) { if (data.full_name) setName(data.full_name); if (data.phone) setPhone(data.phone); if (data.city) setCity(data.city) }
+    })()
+  }, [])
+
   const submit = async () => {
     setBusy(true); setMsg(null)
     const { data: { session } } = await supabase.auth.getSession()
@@ -26,6 +34,14 @@ export default function Checkout() {
       p_request_id: crypto.randomUUID(), p_customization: {}, p_loyalty_points: 0,
     })
     if (error) { setBusy(false); setMsg('تعذّر إنشاء الطلب: ' + error.message); return }
+    // save the customer's details for next time (opportunistic, non-blocking)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const ins = await supabase.from('profiles').insert({ id: user.id, full_name: name, phone, city })
+        if (ins.error) await supabase.from('profiles').update({ full_name: name, phone, city }).eq('id', user.id)
+      }
+    } catch { /* non-blocking */ }
     // 2) create a Tap charge and redirect to the hosted payment page
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/tap-create-charge`, {

@@ -31,11 +31,8 @@ export default function CustomerLogin() {
       : await supabase.auth.verifyOtp({ email: id, token: code, type: 'email' })
     setBusy(false)
     if (res.error) { setMsg('رمز غير صحيح: ' + res.error.message); return }
-    // after verification, check/save profile
-    const { data: prof } = await supabase.from('profiles').select('id,full_name').maybeSingle()
-    if (prof?.full_name) { nav('/customer'); return }
-    if (mode === 'phone') setPhone(id)
-    setStep('profile')
+    // Login alone is enough — go straight to the account. Details are saved later (at checkout).
+    nav('/customer')
   }
   const saveProfile = async () => {
     setBusy(true); setMsg(null)

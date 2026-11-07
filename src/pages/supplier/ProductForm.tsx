@@ -41,7 +41,10 @@ export default function ProductForm() {
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
         <div className="field"><label>الوحدة</label><input value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} placeholder="كرتون / حبة / كيس" /></div>
-        <div className="field"><label>السعر (هللة)</label><input value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/\D/g, '') })} placeholder="مثال: 1500 = 15 ريال" /></div>
+        <div className="field"><label>صافي سعرك (هللة)</label><input value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/\D/g, '') })} placeholder="مثال: 1500 = 15 ريال" />
+          {f.price && Number(f.price) > 0 && (
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>سعر العرض للعميل (شامل رسوم المنصة 35%): <strong style={{ color: 'var(--green)' }}>{(Math.round(Number(f.price) * 1.35) / 100).toFixed(2)} ر.س</strong> · يُحسب تلقائياً عند العرض.</p>
+          )}</div>
         <div className="field"><label>المخزون</label><input value={f.stock} onChange={e => setF({ ...f, stock: e.target.value.replace(/\D/g, '') })} /></div>
         <div className="field"><label>مدن العرض</label>
           <div style={{ display: 'flex', gap: 8 }}>

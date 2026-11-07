@@ -32,7 +32,7 @@ export default function Home() {
             <Link className="btn ghost" to="/suppliers">{t('suppliers')}</Link>
           </div>
           <div style={{ display: 'flex', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
-            {[[en ? '4 cities' : 'أربع مدن', en ? 'Makkah · Madinah · Jeddah · Taif' : 'مكة · المدينة · جدة · الطائف'],
+            {[[en ? 'The two Harams' : 'الحرمان', en ? 'Makkah · Madinah' : 'مكة المكرمة · المدينة المنورة'],
               [en ? 'Non-profit' : 'غير ربحية', en ? 'A spirit of giving' : 'بروح العطاء'],
               [en ? 'Trusted delivery' : 'توصيل موثوق', en ? 'From choice to door' : 'من الاختيار للباب']].map(([a, b]) => (
               <div key={a}><div style={{ fontWeight: 700, color: 'var(--green)', fontSize: 18 }}>{a}</div><div className="muted" style={{ fontSize: 13 }}>{b}</div></div>
@@ -46,7 +46,7 @@ export default function Home() {
         <div className="eyebrow">{en ? '— How it works' : '— كيف نعمل'}</div>
         <h2>{en ? 'Three clear steps' : 'ثلاث خطوات واضحة'}</h2>
       </div>
-      <section className="grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+      <section className="grid cols-3">
         {[['1', en ? 'Choose' : 'اختر', en ? 'Browse water, Qurans and supplies from approved suppliers.' : 'تصفّح المياه والمصاحف والمستلزمات من موردين معتمدين.'],
           ['2', en ? 'Order' : 'اطلب', en ? 'Place your order or request a recurring supply for your facility.' : 'اطلب أو اطلب توريداً دورياً لمنشأتك.'],
           ['3', en ? 'Receive' : 'استلم', en ? 'We coordinate trusted delivery with documented handover.' : 'ننسّق توصيلاً موثوقاً مع توثيق التسليم.']].map(([n, tt, d]) => (
@@ -68,7 +68,7 @@ export default function Home() {
       </div>
 
       {/* مزايا */}
-      <section className="grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', margin: '10px 0 8px' }}>
+      <section className="grid cols-4" style={{ margin: '10px 0 8px' }}>
         {[['✦', en ? 'Clear details' : 'تفاصيل واضحة', en ? 'Unit, price and city per item' : 'الوحدة والسعر والمدينة لكل منتج'],
           ['◈', en ? 'Approved suppliers' : 'موردون معتمدون', en ? 'Verified establishments' : 'منشآت موثّقة'],
           ['❤', en ? 'Loyalty rewards' : 'مكافآت الولاء', en ? 'Earn with every order' : 'اكسب مع كل طلب'],
