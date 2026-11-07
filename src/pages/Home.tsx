@@ -5,7 +5,7 @@ import { useSeo } from '../lib/seo'
 
 export default function Home() {
   const { t } = useI18n()
-  useSeo('توصيل المياه للمساجد والمنازل', 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد، بعناية وموثوقية.')
+  useSeo('بيع وتوصيل المياه للمساجد والمنازل', 'منصة تجارية متخصصة في بيع وتوصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد، بعناية وموثوقية.')
   const en = t('home') === 'Home'
   return (
     <>
@@ -14,7 +14,7 @@ export default function Home() {
         <div>
           <div className="eyebrow" style={{ color: 'var(--gold-2)' }}>{en ? '— Water delivery to mosques & homes' : '— توصيل المياه للمساجد والمنازل'}</div>
           <h3>{en ? 'Everything you need — delivered with care' : 'كل ما تحتاجه يصل بعناية'}</h3>
-          <p>{en ? 'A commercial platform specialized in delivering water to mosques and homes — with Qurans and mosque supplies too.' : 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل — مع المصاحف ومستلزمات المساجد.'}</p>
+          <p>{en ? 'A commercial platform specialized in selling and delivering water to mosques and homes — with Qurans and mosque supplies too.' : 'منصة تجارية متخصصة في بيع وتوصيل المياه للمساجد والمنازل — مع المصاحف ومستلزمات المساجد.'}</p>
         </div>
         <Link className="btn" to="/products">{t('shopNow')}</Link>
       </div>

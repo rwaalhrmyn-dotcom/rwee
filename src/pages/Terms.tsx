@@ -9,7 +9,7 @@ export default function Terms() {
       <div className="card" style={{ lineHeight: 2 }}>
         <p className="muted">رِواء الحرمين is a commercial platform. This policy is governed by the laws and regulations of the Kingdom of Saudi Arabia.</p>
         <h3 style={{ color: 'var(--green)' }}>1. Nature of the platform</h3>
-        <p>A commercial platform specialized in delivering water to mosques and homes, alongside Qurans and mosque supplies.</p>
+        <p>A commercial platform specialized in selling and delivering water to mosques and homes, alongside Qurans and mosque supplies.</p>
         <h3 style={{ color: 'var(--green)' }}>2. Privacy of personal data</h3>
         <p>We collect only the data necessary to fulfil orders and delivery (name, phone, city, address). Data is processed in accordance with the Saudi Personal Data Protection Law (PDPL) and its regulations, kept confidential, and never sold or shared except with parties required to fulfil the order, or when required by a competent authority.</p>
         <h3 style={{ color: 'var(--green)' }}>3. Acceptable use</h3>
@@ -29,7 +29,7 @@ export default function Terms() {
       <div className="card" style={{ lineHeight: 2 }}>
         <p className="muted">رِواء الحرمين منصة تجارية. تخضع هذه السياسة لأنظمة ولوائح المملكة العربية السعودية.</p>
         <h3 style={{ color: 'var(--green)' }}>١. طبيعة المنصة</h3>
-        <p>منصة <strong>تجارية</strong> مختصة في توصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد.</p>
+        <p>منصة <strong>تجارية</strong> متخصصة في بيع وتوصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد.</p>
         <h3 style={{ color: 'var(--green)' }}>٢. خصوصية البيانات الشخصية</h3>
         <p>نجمع فقط البيانات اللازمة لتنفيذ الطلبات والتوصيل (الاسم، الجوال، المدينة، العنوان). تُعالَج البيانات وفق <strong>نظام حماية البيانات الشخصية</strong> في المملكة ولوائحه التنفيذية، وتبقى سرّية، ولا تُباع ولا تُشارك إلا مع الأطراف اللازمة لتنفيذ الطلب، أو عند طلب جهة مختصة نظاماً.</p>
         <h3 style={{ color: 'var(--green)' }}>٣. الاستخدام المقبول</h3>
