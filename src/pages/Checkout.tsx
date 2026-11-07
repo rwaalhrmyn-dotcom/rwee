@@ -23,6 +23,15 @@ export default function Checkout() {
     })()
   }, [])
 
+  // If the customer returns from the Tap page via the browser back button, the
+  // component may be restored from the bfcache with busy still true (which would
+  // leave the pay button stuck disabled). Reset it whenever the page is shown.
+  useEffect(() => {
+    const reset = () => setBusy(false)
+    window.addEventListener('pageshow', reset)
+    return () => window.removeEventListener('pageshow', reset)
+  }, [])
+
   const submit = async () => {
     setBusy(true); setMsg(null)
     const { data: { session } } = await supabase.auth.getSession()
@@ -82,7 +91,16 @@ export default function Checkout() {
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(Math.round(total * 1.15))}</span></div>
         </div>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
-        <button className="btn" style={{ width: '100%' }} disabled={busy || address.length < 10 || name.length < 2 || phone.length < 9} onClick={submit}>
+        {(() => {
+          const need: string[] = []
+          if (address.trim().length < 6) need.push('العنوان التفصيلي')
+          if (name.trim().length < 2) need.push('اسم المستلم')
+          if (phone.replace(/\D/g, '').length < 9) need.push('رقم الجوال')
+          return !busy && need.length > 0
+            ? <div className="note" style={{ margin: '10px 0' }}>أكمل الحقول التالية للمتابعة: {need.join('، ')}.</div>
+            : null
+        })()}
+        <button className="btn" style={{ width: '100%' }} disabled={busy || address.trim().length < 6 || name.trim().length < 2 || phone.replace(/\D/g, '').length < 9} onClick={submit}>
           {busy ? 'جارٍ التحويل للدفع…' : 'المتابعة للدفع ←'}
         </button>
         <p className="muted" style={{ fontSize: 13, marginTop: 8, textAlign: 'center' }}>الأسعار شاملة ضريبة القيمة المضافة · الدفع الآمن عبر Tap · mada · Visa · Apple Pay</p>
