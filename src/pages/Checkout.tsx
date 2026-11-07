@@ -23,7 +23,7 @@ export default function Checkout() {
     const { data: orderId, error } = await supabase.rpc('place_order', {
       p_items: items.map(i => ({ product_id: i.id, quantity: i.qty })),
       p_city: city, p_address: address, p_recipient_name: name, p_phone: phone,
-      p_request_id: crypto.randomUUID(), p_customization: null, p_loyalty_points: 0,
+      p_request_id: crypto.randomUUID(), p_customization: {}, p_loyalty_points: 0,
     })
     if (error) { setBusy(false); setMsg('تعذّر إنشاء الطلب: ' + error.message); return }
     // 2) create a Tap charge and redirect to the hosted payment page
