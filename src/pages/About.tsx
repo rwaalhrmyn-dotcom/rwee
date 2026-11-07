@@ -6,19 +6,17 @@ export default function About() {
   return (
     <section style={{ padding: '32px 0', maxWidth: 820 }}>
       <div className="eyebrow">{en ? '— About the platform' : '— عن المنصة'}</div>
-      <h2 style={{ color: 'var(--green)' }}>{en ? 'A commercial water-delivery platform' : 'منصة تجارية لتوصيل المياه'}</h2>
+      <h2 style={{ color: 'var(--green)' }}>{en ? 'Who we are' : 'من نحن'}</h2>
       <div className="card" style={{ lineHeight: 2 }}>
         {en ? (
           <>
-            <p><strong>رِواء الحرمين</strong> is a <strong>commercial platform specialized in delivering water to mosques and homes</strong>, alongside Qurans and mosque supplies, delivered with care and reliability.</p>
-            <p>Our goal is to make ordering easy, trustworthy and transparent: connecting customers, mosques and homes with approved suppliers within one clear experience.</p>
-            <p>Every order, gift and recurring supply is handled with care from choice to delivery, and your data is kept private.</p>
+            <p>We are a platform that provides the essentials for mosques and those who fast — from Qurans, water, tissues and foldable chairs to iftar and suhoor meals — with a focus on quality, comfort and ease of delivery.</p>
+            <p>Our goal is to simplify your daily life and bring everything you need together in one place.</p>
           </>
         ) : (
           <>
-            <p><strong>رِواء الحرمين</strong> <strong>منصة تجارية مختصة في توصيل المياه للمساجد والمنازل</strong>، مع المصاحف ومستلزمات المساجد، تصل بعناية وموثوقية.</p>
-            <p>غايتها تيسير الطلب بشفافية وموثوقية، بوصل العملاء والمساجد والمنازل بالموردين المعتمدين في تجربة واحدة واضحة.</p>
-            <p>كل طلب وإهداء وتوريد مستمر يُدار بعناية من الاختيار إلى التسليم، مع الحفاظ على خصوصية بياناتك.</p>
+            <p>نحن منصة تقدّم المستلزمات الأساسية للمساجد والصائمين — من المصاحف والمياه والمناديل والكراسي القابلة للطيّ، إلى وجبات الإفطار والسحور — مع التركيز على الجودة والراحة وسهولة التوصيل.</p>
+            <p>هدفنا تسهيل حياتك اليومية وتوفير كل ما تحتاجه في مكان واحد.</p>
           </>
         )}
       </div>
