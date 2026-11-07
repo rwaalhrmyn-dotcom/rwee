@@ -80,7 +80,6 @@ export default function Layout() {
                   <div className="sep" />
                   <Link to="/customer/login">{t('customerLogin')}</Link>
                   <Link to="/supplier">{t('supplierPortal')}</Link>
-                  <Link to="/admin">{t('adminPanel')}</Link>
                 </div>
               </div>
               <button className="iconbtn hamb" onClick={() => setOpen(o => !o)} title={t('menu')} aria-label="menu">☰</button>
@@ -108,7 +107,6 @@ export default function Layout() {
             <NavLink to="/customer">{t('myAccount')}</NavLink>
             <NavLink to="/delivery">{t('deliveryDocs')}</NavLink>
             <NavLink to="/supplier">{t('supplierPortal')}</NavLink>
-            <NavLink to="/admin">{t('adminPanel')}</NavLink>
           </div>
         </div>
       </header>
