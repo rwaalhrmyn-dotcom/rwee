@@ -7,7 +7,7 @@ export default function Terms() {
     <section style={{ padding: '32px 0', maxWidth: 820 }}>
       <h2 style={{ color: 'var(--green)' }}>Usage Policy, Privacy & Rights</h2>
       <div className="card" style={{ lineHeight: 2 }}>
-        <p className="muted">رِواء الحرمين is a commercial platform. This policy is governed by the laws and regulations of the Kingdom of Saudi Arabia.</p>
+        <p className="muted">رِواء الحرمين is a commercial platform for selling and delivering water and mosque supplies. This policy is governed by the laws and regulations of the Kingdom of Saudi Arabia.</p>
         <h3 style={{ color: 'var(--green)' }}>1. Nature of the platform</h3>
         <p>A commercial platform specialized in selling and delivering water to mosques and homes, alongside Qurans and mosque supplies.</p>
         <h3 style={{ color: 'var(--green)' }}>2. Privacy of personal data</h3>
@@ -27,7 +27,7 @@ export default function Terms() {
     <section style={{ padding: '32px 0', maxWidth: 820 }}>
       <h2 style={{ color: 'var(--green)' }}>سياسة الاستخدام والخصوصية وضمان الحقوق</h2>
       <div className="card" style={{ lineHeight: 2 }}>
-        <p className="muted">رِواء الحرمين منصة تجارية. تخضع هذه السياسة لأنظمة ولوائح المملكة العربية السعودية.</p>
+        <p className="muted">رِواء الحرمين منصة تجارية متخصصة في بيع وتوصيل المياه ومستلزمات المساجد. تخضع هذه السياسة لأنظمة ولوائح المملكة العربية السعودية.</p>
         <h3 style={{ color: 'var(--green)' }}>١. طبيعة المنصة</h3>
         <p>منصة <strong>تجارية</strong> متخصصة في بيع وتوصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد.</p>
         <h3 style={{ color: 'var(--green)' }}>٢. خصوصية البيانات الشخصية</h3>

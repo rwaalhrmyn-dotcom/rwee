@@ -3,12 +3,13 @@ import { supabase, SUPABASE_URL } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
 import { useNavigate, Link } from 'react-router-dom'
-import MapsAddress from '../components/MapsAddress'
+import LocationPicker, { LatLng } from '../components/LocationPicker'
 
 export default function Checkout() {
   const { items, total, clear } = useCart()
   const [city, setCity] = useState('makkah')
   const [address, setAddress] = useState('')
+  const [geo, setGeo] = useState<LatLng | null>(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
@@ -36,10 +37,14 @@ export default function Checkout() {
     setBusy(true); setMsg(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setBusy(false); nav('/customer/login?redirect=/checkout'); return }
+    // Include the exact map pin (if chosen) so the courier can navigate to it.
+    const fullAddress = geo
+      ? `${address} — الموقع على الخريطة: https://www.google.com/maps?q=${geo.lat},${geo.lng}`
+      : address
     // 1) create the order
     const { data: orderId, error } = await supabase.rpc('place_order', {
       p_items: items.map(i => ({ product_id: i.id, quantity: i.qty })),
-      p_city: city, p_address: address, p_recipient_name: name, p_phone: phone,
+      p_city: city, p_address: fullAddress, p_recipient_name: name, p_phone: phone,
       p_request_id: crypto.randomUUID(), p_customization: {}, p_loyalty_points: 0,
     })
     if (error) { setBusy(false); setMsg('تعذّر إنشاء الطلب: ' + error.message); return }
@@ -82,7 +87,7 @@ export default function Checkout() {
           <select value={city} onChange={e => setCity(e.target.value)}>
             {Object.entries(CITIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div className="field"><label>العنوان التفصيلي</label><MapsAddress value={address} onChange={setAddress} /></div>
+        <div className="field"><label>العنوان ومكان التوصيل</label><LocationPicker value={address} onChange={setAddress} onLocation={setGeo} city={city} /></div>
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
         <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
