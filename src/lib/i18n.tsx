@@ -30,7 +30,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'اسأل عن المياه، المصاحف، أو متابعة طلبك…', ask: 'اسأل ←', go: 'اذهب ←',
     ftrAbout: 'منصة تجارية مختصة في توصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد، بعناية وموثوقية.',
     ftrProducts: 'المنتجات', ftrSuppliersOrgs: 'الموردون', ftrAccount: 'حسابك',
-    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة', about: 'عن المنصة',
+    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة', about: 'من نحن',
     cities: 'منصة تجارية · بياناتك تبقى خاصة',
   },
   en: {
@@ -51,7 +51,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Ask about water, Qurans, or track your order…', ask: 'Ask →', go: 'Go →',
     ftrAbout: 'A commercial platform specialized in delivering water to mosques and homes, alongside Qurans and mosque supplies, with care and reliability.',
     ftrProducts: 'Products', ftrSuppliersOrgs: 'Suppliers', ftrAccount: 'Your account',
-    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved', about: 'About',
+    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved', about: 'Who we are',
     cities: 'A commercial platform · your data stays private',
   },
   ur: {

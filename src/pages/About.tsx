@@ -5,7 +5,7 @@ export default function About() {
   const en = t('home') === 'Home'
   return (
     <section style={{ padding: '32px 0', maxWidth: 820 }}>
-      <div className="eyebrow">{en ? '— About the platform' : '— عن المنصة'}</div>
+      <div className="eyebrow">{en ? '— Who we are' : '— من نحن'}</div>
       <h2 style={{ color: 'var(--green)' }}>{en ? 'Who we are' : 'من نحن'}</h2>
       <div className="card" style={{ lineHeight: 2 }}>
         {en ? (
