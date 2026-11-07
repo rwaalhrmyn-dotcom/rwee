@@ -55,13 +55,16 @@ export default function Checkout() {
         <div className="field"><label>العنوان التفصيلي</label><MapsAddress value={address} onChange={setAddress} /></div>
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, margin: '12px 0' }}>
-          <span>إجمالي المنتجات</span><span className="price">{sar(total)}</span></div>
+        <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">إجمالي المنتجات</span><span>{sar(total)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">ضريبة القيمة المضافة (15%)</span><span>{sar(Math.round(total * 0.15))}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(Math.round(total * 1.15))}</span></div>
+        </div>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
         <button className="btn" style={{ width: '100%' }} disabled={busy || address.length < 10 || name.length < 2 || phone.length < 9} onClick={submit}>
           {busy ? 'جارٍ التحويل للدفع…' : 'المتابعة للدفع ←'}
         </button>
-        <p className="muted" style={{ fontSize: 13, marginTop: 8, textAlign: 'center' }}>الدفع الآمن عبر Tap · mada · Visa · MasterCard · Apple Pay</p>
+        <p className="muted" style={{ fontSize: 13, marginTop: 8, textAlign: 'center' }}>الأسعار شاملة ضريبة القيمة المضافة · الدفع الآمن عبر Tap · mada · Visa · Apple Pay</p>
       </div>
     </section>
   )

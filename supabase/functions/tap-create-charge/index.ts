@@ -36,7 +36,8 @@ Deno.serve(async (req) => {
     if (error || !order) return json({ error: "order not found" }, 404);
     if (order.payment_status === "paid") return json({ error: "already paid" }, 409);
 
-    const amount = ((order.subtotal_halalas ?? 0) + (order.delivery_halalas ?? 0)) / 100;
+    const base = (order.subtotal_halalas ?? 0) + (order.delivery_halalas ?? 0);
+    const amount = Math.round(base * 1.15) / 100; // 15% KSA VAT
     if (amount <= 0) return json({ error: "invalid amount" }, 400);
 
     const charge = await fetch("https://api.tap.company/v2/charges", {
