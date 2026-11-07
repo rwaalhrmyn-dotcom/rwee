@@ -41,11 +41,14 @@ export default function CustomerLogin() {
     setBusy(true); setMsg(null)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setBusy(false); setMsg('انتهت الجلسة، أعد الدخول.'); return }
-    const { error } = await supabase.from('profiles').upsert({
-      id: user.id, full_name: fullName, phone: normPhone(phone).replace('+966', '0'), city,
-    })
+    const ph = normPhone(phone).replace('+966', '0')
+    // insert (grant covers id,full_name,phone,city); on conflict update only the mutable columns
+    let err = (await supabase.from('profiles').insert({ id: user.id, full_name: fullName, phone: ph, city })).error
+    if (err && (err.code === '23505' || /duplicate|conflict/i.test(err.message))) {
+      err = (await supabase.from('profiles').update({ full_name: fullName, phone: ph, city }).eq('id', user.id)).error
+    }
     setBusy(false)
-    if (error) setMsg('تعذّر حفظ البيانات: ' + error.message); else nav('/customer')
+    if (err) setMsg('تعذّر حفظ البيانات: ' + err.message); else nav('/customer')
   }
 
   return (
