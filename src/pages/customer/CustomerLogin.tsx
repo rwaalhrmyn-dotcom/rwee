@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CITIES } from '../../lib/format'
 import GoogleButton from '../../components/GoogleButton'
 
 type Mode = 'phone' | 'email'
 export default function CustomerLogin() {
+  const [params] = useSearchParams()
+  const redirect = params.get('redirect') && /^\/[A-Za-z0-9/_-]*$/.test(params.get('redirect') || '') ? params.get('redirect')! : '/customer'
   const [mode, setMode] = useState<Mode>('phone')
   const [id, setId] = useState('')        // phone or email
   const [code, setCode] = useState('')
@@ -31,8 +33,8 @@ export default function CustomerLogin() {
       : await supabase.auth.verifyOtp({ email: id, token: code, type: 'email' })
     setBusy(false)
     if (res.error) { setMsg('رمز غير صحيح: ' + res.error.message); return }
-    // Login alone is enough — go straight to the account. Details are saved later (at checkout).
-    nav('/customer')
+    // Login alone is enough — continue to wherever the user was headed (checkout) or the account.
+    nav(redirect)
   }
   const saveProfile = async () => {
     setBusy(true); setMsg(null)
@@ -62,7 +64,7 @@ export default function CustomerLogin() {
           {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
           <button className="btn" style={{ width: '100%' }} disabled={busy || id.length < 5} onClick={send}>إرسال رمز التحقق ←</button>
           <div className="orsep">أو</div>
-          <GoogleButton redirect="/customer" />
+          <GoogleButton redirect={redirect} />
         </div>
       )}
       {step === 'verify' && (

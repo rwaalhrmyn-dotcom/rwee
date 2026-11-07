@@ -26,7 +26,7 @@ export default function Checkout() {
   const submit = async () => {
     setBusy(true); setMsg(null)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setBusy(false); nav('/customer/login'); return }
+    if (!session) { setBusy(false); nav('/customer/login?redirect=/checkout'); return }
     // 1) create the order
     const { data: orderId, error } = await supabase.rpc('place_order', {
       p_items: items.map(i => ({ product_id: i.id, quantity: i.qty })),
@@ -51,10 +51,15 @@ export default function Checkout() {
       })
       const out = await res.json().catch(() => ({}))
       if (out.url) { clear(); window.location.href = out.url; return }
-      // Payment gateway not active yet → complete the order; team will follow up.
-      clear(); nav('/customer?placed=1'); return
+      // Charge could not be created — keep the order pending (unpaid) and let the
+      // customer retry; never pretend the order was completed without payment.
+      setBusy(false)
+      setMsg('تعذّر فتح صفحة الدفع حالياً. طلبك محفوظ كمعلّق — حاول الدفع مرة أخرى، وإن تكرر الأمر تواصل معنا وسنكمل طلبك.')
+      return
     } catch (e) {
-      clear(); nav('/customer?placed=1'); return
+      setBusy(false)
+      setMsg('تعذّر الاتصال ببوابة الدفع. تحقق من اتصالك وحاول مرة أخرى.')
+      return
     }
   }
 
