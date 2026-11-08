@@ -7,11 +7,12 @@ const ORDER_STATUS: Record<string, string> = {
   pending: 'بانتظار المراجعة', confirmed: 'مؤكّد', preparing: 'قيد التجهيز',
   out_for_delivery: 'قيد التوصيل', delivered: 'تم التسليم', cancelled: 'ملغي',
 }
-const TABS = ['overview', 'orders', 'suppliers', 'products', 'inquiries', 'settings'] as const
+const TABS = ['overview', 'orders', 'customers', 'suppliers', 'products', 'deliveries', 'inquiries', 'staff', 'audit', 'settings'] as const
 type Tab = typeof TABS[number]
 const TAB_LABEL: Record<Tab, string> = {
-  overview: 'نظرة عامة', orders: 'الطلبات', suppliers: 'الموردون',
-  products: 'المنتجات والأسعار', inquiries: 'الاستفسارات', settings: 'الإعدادات',
+  overview: 'نظرة عامة', orders: 'الطلبات', customers: 'العملاء', suppliers: 'الموردون',
+  products: 'المنتجات والأسعار', deliveries: 'التوصيل والشحن', inquiries: 'الاستفسارات',
+  staff: 'طاقم الإدارة', audit: 'سجل التدقيق', settings: 'الإعدادات',
 }
 
 export default function AdminDashboard() {
@@ -46,9 +47,13 @@ export default function AdminDashboard() {
 
       {tab === 'overview' && <Overview m={metrics} />}
       {tab === 'orders' && <Orders />}
+      {tab === 'customers' && <Customers />}
       {tab === 'suppliers' && <Suppliers />}
       {tab === 'products' && <Products />}
+      {tab === 'deliveries' && <Deliveries />}
       {tab === 'inquiries' && <Inquiries />}
+      {tab === 'staff' && <Staff />}
+      {tab === 'audit' && <Audit />}
       {tab === 'settings' && <Settings />}
     </section>
   )
@@ -189,6 +194,21 @@ function Products() {
   const { rows, loading, err, reload } = useLoader('admin_products')
   const [msg, setMsg] = useState<string | null>(null)
   const [edit, setEdit] = useState<Record<string, { price: string; stock: string }>>({})
+  const [nf, setNf] = useState({ name: '', category: 'water', unit: '', price: '', stock: '' })
+  const [showNew, setShowNew] = useState(false)
+  const create = async () => {
+    setMsg(null)
+    const { error } = await supabase.rpc('admin_create_product', {
+      p_name: nf.name, p_category: nf.category, p_unit: nf.unit,
+      p_price_halalas: Number(nf.price), p_stock: Number(nf.stock || 0), p_description: '',
+    })
+    if (error) setMsg('تعذّر الإنشاء: ' + error.message)
+    else { setMsg('تمت الإضافة'); setNf({ name: '', category: 'water', unit: '', price: '', stock: '' }); setShowNew(false); reload() }
+  }
+  const archive = async (p: any) => {
+    const { error } = await supabase.rpc('admin_set_product_archived', { p_id: p.id, p_archived: !p.archived })
+    if (error) setMsg('تعذّر: ' + error.message); else reload()
+  }
   const save = async (p: any) => {
     setMsg(null)
     const e = edit[p.id] || { price: String(p.price_halalas), stock: String(p.stock) }
@@ -207,9 +227,23 @@ function Products() {
   }
   if (loading) return <p className="muted">جارٍ التحميل…</p>
   if (err) return <div className="note">خطأ: {err}</div>
+  const CATS: [string, string][] = [['water', 'مياه'], ['quran', 'مصاحف'], ['supplies', 'مستلزمات'], ['food', 'أغذية'], ['equipment', 'تجهيزات']]
   return (
     <div>
       {msg && <div className="note" style={{ marginBottom: 10 }}>{msg}</div>}
+      <button className="btn" style={{ marginBottom: 12 }} onClick={() => setShowNew(s => !s)}>{showNew ? 'إلغاء' : '+ إضافة منتج'}</button>
+      {showNew && (
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div className="field"><label>اسم المنتج</label><input value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} /></div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <label style={{ fontSize: 13 }}>الفئة<select value={nf.category} onChange={e => setNf({ ...nf, category: e.target.value })}>{CATS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+            <label style={{ fontSize: 13 }}>الوحدة<input value={nf.unit} onChange={e => setNf({ ...nf, unit: e.target.value })} placeholder="شدة/كرتون" style={{ width: 110 }} /></label>
+            <label style={{ fontSize: 13 }}>السعر (هللة)<input value={nf.price} onChange={e => setNf({ ...nf, price: e.target.value.replace(/\D/g, '') })} style={{ width: 110 }} /></label>
+            <label style={{ fontSize: 13 }}>المخزون<input value={nf.stock} onChange={e => setNf({ ...nf, stock: e.target.value.replace(/\D/g, '') })} style={{ width: 90 }} /></label>
+          </div>
+          <button className="btn" style={{ marginTop: 10 }} disabled={nf.name.length < 2 || !nf.price} onClick={create}>حفظ المنتج ←</button>
+        </div>
+      )}
       {rows.map(p => {
         const e = edit[p.id] || { price: String(p.price_halalas), stock: String(p.stock) }
         return (
@@ -224,6 +258,7 @@ function Products() {
               <button className="btn" style={{ padding: '7px 14px' }} onClick={() => save(p)}>حفظ</button>
               <button className="btn ghost" style={{ padding: '7px 12px' }} onClick={() => toggle(p, 'active')}>{p.active ? 'إخفاء' : 'إظهار'}</button>
               <button className="btn ghost" style={{ padding: '7px 12px' }} onClick={() => toggle(p, 'featured')}>{p.featured ? '★ مميّز' : 'تمييز'}</button>
+              <button className="btn ghost" style={{ padding: '7px 12px', color: p.archived ? 'var(--green)' : '#b23' }} onClick={() => archive(p)}>{p.archived ? 'استرجاع' : 'أرشفة'}</button>
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>السعر الحالي {sar(p.price_halalas)} {p.active ? '· ظاهر' : '· مخفي'}{p.archived ? ' · مؤرشف' : ''}</div>
           </div>
@@ -266,6 +301,101 @@ function Inquiries() {
   )
 }
 
+function Customers() {
+  const { rows, loading, err } = useLoader('admin_customers')
+  if (loading) return <p className="muted">جارٍ التحميل…</p>
+  if (err) return <div className="note">خطأ: {err}</div>
+  if (rows.length === 0) return <p className="muted">لا عملاء بعد.</p>
+  return (
+    <div>
+      {rows.map(c => (
+        <div className="card" key={c.id} style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <div><strong>{c.full_name || 'عميل'}</strong> <span className="muted" style={{ fontSize: 13 }}>· {c.phone || '—'} · {c.city || '—'} {c.email ? '· ' + c.email : ''}</span></div>
+          <span className="badge">{c.orders} طلب</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Deliveries() {
+  const { rows, loading, err, reload } = useLoader('admin_deliveries')
+  const [msg, setMsg] = useState<string | null>(null)
+  const STATUS: [string, string][] = [['scheduled', 'مجدول'], ['submitted', 'بانتظار المراجعة'], ['approved', 'معتمد'], ['changes_requested', 'يحتاج تعديل']]
+  const setStatus = async (id: string, status: string) => {
+    setMsg(null)
+    const { error } = await supabase.rpc('admin_set_delivery_status', { p_id: id, p_status: status })
+    if (error) setMsg('تعذّر: ' + error.message); else reload()
+  }
+  if (loading) return <p className="muted">جارٍ التحميل…</p>
+  if (err) return <div className="note">خطأ: {err}</div>
+  return (
+    <div>
+      <div className="note" style={{ marginBottom: 10 }}>ربط شركة الشحن <strong>OTO</strong> سيُفعّل لاحقاً. حالياً يمكنك متابعة حالة التوصيل واعتماده يدوياً.</div>
+      {msg && <div className="note" style={{ marginBottom: 10 }}>{msg}</div>}
+      {rows.length === 0 && <p className="muted">لا عمليات توصيل بعد.</p>}
+      {rows.map(d => (
+        <div className="card" key={d.id} style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div><strong>{d.recipient_name || '—'}</strong> <span className="muted" style={{ fontSize: 13 }}>· {d.city || ''} · {new Date(d.created_at).toLocaleDateString('ar-SA')}</span></div>
+          <select value={d.status} onChange={e => setStatus(d.id, e.target.value)} style={{ maxWidth: 170 }}>
+            {STATUS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Staff() {
+  const { rows, loading, err, reload } = useLoader('admin_staff')
+  const [email, setEmail] = useState('')
+  const [msg, setMsg] = useState<string | null>(null)
+  const add = async () => {
+    setMsg(null)
+    const { error } = await supabase.rpc('admin_add_staff', { p_email: email.trim() })
+    if (error) setMsg('تعذّر: ' + error.message); else { setMsg('تمت الإضافة كمشرف'); setEmail(''); reload() }
+  }
+  const remove = async (uid: string) => {
+    const { error } = await supabase.rpc('admin_remove_staff', { p_user_id: uid })
+    if (error) setMsg('تعذّر: ' + error.message); else reload()
+  }
+  return (
+    <div>
+      {msg && <div className="note" style={{ marginBottom: 10 }}>{msg}</div>}
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div className="field"><label>إضافة مشرف (بالبريد — يجب أن يملك حساباً بكلمة مرور)</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" type="email" />
+            <button className="btn" style={{ padding: '8px 16px' }} disabled={!email} onClick={add}>إضافة</button>
+          </div>
+        </div>
+      </div>
+      {loading ? <p className="muted">جارٍ…</p> : err ? <div className="note">خطأ: {err}</div> : rows.map(s => (
+        <div className="card" key={s.user_id} style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div><strong>{s.email}</strong> <span className="badge" style={{ marginInlineStart: 6 }}>{s.role}</span> <span className="muted" style={{ fontSize: 12 }}>· {s.status}{s.is_operator ? ' · مشغّل' : ''}</span></div>
+          <button className="btn ghost" style={{ padding: '6px 12px', color: '#b23' }} onClick={() => remove(s.user_id)}>إزالة</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Audit() {
+  const { rows, loading, err } = useLoader('admin_audit', { p_limit: 100 })
+  if (loading) return <p className="muted">جارٍ التحميل…</p>
+  if (err) return <div className="note">خطأ: {err}</div>
+  if (rows.length === 0) return <p className="muted">لا سجلات بعد.</p>
+  return (
+    <div className="card">
+      {rows.map((a, i) => (
+        <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid var(--line)', fontSize: 14 }}>
+          <strong>{a.action}</strong> <span className="muted">· {a.entity_type} · {a.actor_email || '—'} · {a.created_at ? new Date(a.created_at).toLocaleString('ar-SA') : ''}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Settings() {
   const [s, setS] = useState<any>(null)
   const [msg, setMsg] = useState<string | null>(null)
@@ -290,7 +420,29 @@ function Settings() {
           <button className="btn" style={{ padding: '7px 16px' }} onClick={() => save(null, Number(delivery || 0))}>حفظ</button>
         </div>
       </div>
-      <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>خدمات إضافية: {(s.services || []).map((x: any) => `${x.code}: ${sar(x.price_halalas)}`).join(' · ') || '—'}</div>
+      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+        <strong>الخدمات الإضافية</strong>
+        {(s.services || []).map((x: any) => <ServiceRow key={x.code} svc={x} onSaved={load} onMsg={setMsg} />)}
+        {(!s.services || s.services.length === 0) && <p className="muted" style={{ fontSize: 13 }}>لا خدمات.</p>}
+      </div>
+    </div>
+  )
+}
+
+const SERVICE_LABEL: Record<string, string> = { name_printing: 'طباعة الاسم على المصحف', delivery: 'التوصيل' }
+function ServiceRow({ svc, onSaved, onMsg }: { svc: any; onSaved: () => void; onMsg: (m: string) => void }) {
+  const [price, setPrice] = useState(String(svc.price_halalas ?? 0))
+  const save = async (active: boolean | null) => {
+    const { error } = await supabase.rpc('admin_set_service', { p_code: svc.code, p_price_halalas: Number(price || 0), p_active: active })
+    if (error) onMsg('تعذّر: ' + error.message); else { onMsg('تم الحفظ'); onSaved() }
+  }
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '8px 0' }}>
+      <span style={{ minWidth: 150, fontSize: 14 }}>{SERVICE_LABEL[svc.code] || svc.code}</span>
+      <input value={price} onChange={e => setPrice(e.target.value.replace(/\D/g, ''))} style={{ width: 100 }} />
+      <button className="btn" style={{ padding: '6px 12px' }} onClick={() => save(null)}>حفظ السعر</button>
+      <button className="btn ghost" style={{ padding: '6px 12px' }} onClick={() => save(!svc.active)}>{svc.active ? 'إيقاف' : 'تفعيل'}</button>
+      <span className="badge">{svc.active ? 'مفعّل' : 'موقوف'}</span>
     </div>
   )
 }
