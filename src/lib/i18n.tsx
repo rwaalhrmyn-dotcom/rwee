@@ -30,7 +30,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'اسأل عن المياه، المصاحف، أو متابعة طلبك…', ask: 'اسأل ←', go: 'اذهب ←',
     ftrAbout: 'منصة تجارية متخصصة في بيع وتوصيل المياه للمساجد والمنازل، مع المصاحف ومستلزمات المساجد، بعناية وموثوقية.',
     ftrProducts: 'المنتجات', ftrSuppliersOrgs: 'الموردون', ftrAccount: 'حسابك',
-    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة', about: 'من نحن',
+    myOrders: 'طلباتي', terms: 'السياسة والخصوصية', rights: 'جميع الحقوق محفوظة', about: 'من نحن', contactUs: 'تواصل معنا',
     cities: 'منصة تجارية · بياناتك تبقى خاصة',
   },
   en: {
@@ -51,7 +51,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Ask about water, Qurans, or track your order…', ask: 'Ask →', go: 'Go →',
     ftrAbout: 'A commercial platform specialized in selling and delivering water to mosques and homes, alongside Qurans and mosque supplies, with care and reliability.',
     ftrProducts: 'Products', ftrSuppliersOrgs: 'Suppliers', ftrAccount: 'Your account',
-    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved', about: 'Who we are',
+    myOrders: 'My orders', terms: 'Policy & privacy', rights: 'All rights reserved', about: 'Who we are', contactUs: 'Contact us',
     cities: 'A commercial platform · your data stays private',
   },
   ur: {
@@ -70,7 +70,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'پانی، قرآن یا آرڈر ٹریک کے بارے میں پوچھیں…', ask: 'پوچھیں →', go: 'جائیں →',
     ftrAbout: 'ایک تجارتی پلیٹ فارم جو مساجد اور گھروں تک پانی، قرآن اور مسجد کا سامان خیال سے پہنچاتا ہے۔',
     ftrProducts: 'مصنوعات', ftrSuppliersOrgs: 'سپلائرز', ftrAccount: 'آپ کا اکاؤنٹ',
-    myOrders: 'میرے آرڈرز', terms: 'پالیسی و رازداری', rights: 'جملہ حقوق محفوظ ہیں', about: 'ادارے کے بارے میں',
+    myOrders: 'میرے آرڈرز', terms: 'پالیسی و رازداری', rights: 'جملہ حقوق محفوظ ہیں', about: 'ادارے کے بارے میں', contactUs: 'ہم سے رابطہ',
     cities: 'تجارتی پلیٹ فارم · آپ کا ڈیٹا محفوظ',
   },
   fr: {
@@ -89,7 +89,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Eau, Corans, suivi de commande…', ask: 'Demander →', go: 'Aller →',
     ftrAbout: 'Une plateforme commerciale spécialisée dans la livraison d’eau aux mosquées et aux foyers, avec Corans et fournitures de mosquée, livrés avec soin.',
     ftrProducts: 'Produits', ftrSuppliersOrgs: 'Fournisseurs', ftrAccount: 'Votre compte',
-    myOrders: 'Mes commandes', terms: 'Politique & confidentialité', rights: 'Tous droits réservés', about: 'À propos',
+    myOrders: 'Mes commandes', terms: 'Politique & confidentialité', rights: 'Tous droits réservés', about: 'À propos', contactUs: 'Contactez-nous',
     cities: 'Plateforme commerciale · vos données restent privées',
   },
   id: {
@@ -108,7 +108,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Tanya air, Alquran, atau lacak pesanan…', ask: 'Tanya →', go: 'Pergi →',
     ftrAbout: 'Platform komersial khusus pengantaran air ke masjid dan rumah, beserta Alquran dan perlengkapan masjid, dengan perhatian.',
     ftrProducts: 'Produk', ftrSuppliersOrgs: 'Pemasok', ftrAccount: 'Akun Anda',
-    myOrders: 'Pesanan saya', terms: 'Kebijakan & privasi', rights: 'Hak cipta dilindungi', about: 'Tentang',
+    myOrders: 'Pesanan saya', terms: 'Kebijakan & privasi', rights: 'Hak cipta dilindungi', about: 'Tentang', contactUs: 'Hubungi kami',
     cities: 'Platform komersial · data Anda tetap privat',
   },
   tr: {
@@ -127,7 +127,7 @@ const T: Record<Lang, Dict> = {
     asstPlaceholder: 'Su, Kuran veya sipariş takibi sorun…', ask: 'Sor →', go: 'Git →',
     ftrAbout: 'Camilere ve evlere su teslimatında uzman, Kuran ve cami malzemeleri de sunan ticari bir platform.',
     ftrProducts: 'Ürünler', ftrSuppliersOrgs: 'Tedarikçiler', ftrAccount: 'Hesabınız',
-    myOrders: 'Siparişlerim', terms: 'Politika ve gizlilik', rights: 'Tüm hakları saklıdır', about: 'Hakkında',
+    myOrders: 'Siparişlerim', terms: 'Politika ve gizlilik', rights: 'Tüm hakları saklıdır', about: 'Hakkında', contactUs: 'İletişim',
     cities: 'Ticari platform · verileriniz gizli kalır',
   },
 }

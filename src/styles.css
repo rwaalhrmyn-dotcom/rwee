@@ -109,6 +109,9 @@ h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em}
 
 /* footer */
 .footer{background:linear-gradient(180deg,#fff,var(--cream));border-top:1px solid var(--line);margin-top:56px;padding:40px 0 26px}
+.wa-float{position:fixed;inset-inline-end:18px;bottom:18px;z-index:60;width:56px;height:56px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(37,211,102,.45);transition:transform .15s}
+.wa-float:hover{transform:scale(1.07)}
+@media(max-width:560px){.wa-float{width:52px;height:52px;inset-inline-end:14px;bottom:14px}}
 .ftr-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}
 .ftr-grid h4{color:var(--green);margin:0 0 12px;font-size:15px}
 .ftr-grid a{display:block;color:var(--muted);padding:4px 0;font-size:14px;transition:.15s}

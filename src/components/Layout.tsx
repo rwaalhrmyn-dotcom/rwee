@@ -106,7 +106,11 @@ export default function Layout() {
           <div className="ftr-grid">
             <div>
               <div className="brand" style={{ marginBottom: 8 }}>رِواء الحرمين</div>
-              <p className="muted" style={{ margin: 0, maxWidth: 320 }}>{t('ftrAbout')}</p>
+              <p className="muted" style={{ margin: '0 0 12px', maxWidth: 320 }}>{t('ftrAbout')}</p>
+              <h4>{t('contactUs')}</h4>
+              <a href="tel:+966531995976" dir="ltr" style={{ textAlign: 'start' }}>📞 ‎+966 53 199 5976</a>
+              <a href="https://wa.me/966531995976" target="_blank" rel="noopener" dir="ltr" style={{ textAlign: 'start' }}>💬 WhatsApp</a>
+              <a href="mailto:rwaalhrmyn@gmail.com" dir="ltr" style={{ textAlign: 'start' }}>✉️ rwaalhrmyn@gmail.com</a>
             </div>
             <div>
               <h4>{t('ftrProducts')}</h4>
@@ -136,6 +140,10 @@ export default function Layout() {
           </div>
         </div>
       </footer>
+
+      <a className="wa-float" href="https://wa.me/966531995976" target="_blank" rel="noopener" aria-label="WhatsApp" title={t('contactUs')}>
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="#fff" aria-hidden="true"><path d="M16.04 4C9.9 4 4.92 8.98 4.92 15.12c0 2.03.55 3.98 1.58 5.7L4.8 28l7.36-1.66a11.07 11.07 0 0 0 3.88.7h.01c6.13 0 11.11-4.98 11.11-11.12C27.16 8.98 22.18 4 16.04 4Zm0 20.3h-.01c-1.2 0-2.38-.32-3.4-.93l-.24-.14-4.37.98.93-4.26-.16-.25a9.12 9.12 0 0 1-1.4-4.84c0-5.04 4.1-9.14 9.15-9.14 2.44 0 4.74.95 6.46 2.68a9.08 9.08 0 0 1 2.68 6.47c0 5.04-4.1 9.14-9.14 9.14Zm5.02-6.84c-.27-.14-1.63-.8-1.88-.9-.25-.09-.43-.13-.62.14-.18.27-.71.9-.87 1.08-.16.18-.32.2-.59.07-.27-.14-1.16-.43-2.21-1.36-.82-.73-1.37-1.63-1.53-1.9-.16-.27-.02-.42.12-.55.12-.12.27-.32.4-.48.14-.16.18-.27.27-.46.09-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.45-.46-.62-.47l-.53-.01c-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.3 0 1.36.98 2.67 1.12 2.85.14.18 1.94 2.96 4.7 4.15.66.28 1.17.45 1.57.58.66.21 1.26.18 1.73.11.53-.08 1.63-.67 1.86-1.3.23-.64.23-1.19.16-1.3-.07-.12-.25-.19-.52-.32Z"/></svg>
+      </a>
     </>
   )
 }
