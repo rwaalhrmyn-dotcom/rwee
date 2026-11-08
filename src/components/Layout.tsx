@@ -8,6 +8,7 @@ export default function Layout() {
   const { items } = useCart()
   const count = items.reduce((s, i) => s + i.qty, 0)
   const { t, lang, setLang } = useI18n()
+  const en = t('home') === 'Home'
   const [open, setOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const curLang = LANGS.find(l => l.code === lang)
@@ -134,6 +135,17 @@ export default function Layout() {
             </div>
           </div>
           <PayMethods />
+          <a className="cr-badge" href="https://mc.gov.sa" target="_blank" rel="noopener"
+             title={en ? 'Verified commercial registration — Ministry of Commerce' : 'سجل تجاري موثّق — وزارة التجارة'}>
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+              <path d="M12 2l7 3v6c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V5l7-3z" fill="rgba(31,122,84,.08)" />
+              <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>
+              <strong>{en ? 'Verified commercial registration' : 'سجل تجاري موثّق'}</strong>
+              <small dir="ltr">{en ? 'Unified No. 7041122404 · Active' : 'الرقم الموحّد 7041122404 · مؤسسة · نشط'}</small>
+            </span>
+          </a>
           <div className="ftr-bottom">
             <span>© {new Date().getFullYear()} رِواء الحرمين — {t('rights')}</span>
             <span className="muted">{t('cities')}</span>

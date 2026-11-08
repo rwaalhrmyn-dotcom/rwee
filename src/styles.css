@@ -109,6 +109,11 @@ h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em}
 
 /* footer */
 .footer{background:linear-gradient(180deg,#fff,var(--cream));border-top:1px solid var(--line);margin-top:56px;padding:40px 0 26px}
+.cr-badge{display:flex;align-items:center;gap:12px;width:fit-content;margin:18px auto 0;padding:11px 18px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--deep);box-shadow:var(--shadow);transition:.15s}
+.cr-badge:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.cr-badge svg{color:var(--green);flex:none}
+.cr-badge strong{display:block;font-size:14px;color:var(--green)}
+.cr-badge small{display:block;font-size:12px;color:var(--muted)}
 .wa-float{position:fixed;inset-inline-end:18px;bottom:18px;z-index:60;width:56px;height:56px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(37,211,102,.45);transition:transform .15s}
 .wa-float:hover{transform:scale(1.07)}
 @media(max-width:560px){.wa-float{width:52px;height:52px;inset-inline-end:14px;bottom:14px}}
