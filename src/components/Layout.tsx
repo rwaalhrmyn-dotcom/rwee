@@ -111,7 +111,7 @@ export default function Layout() {
               <h4>{t('contactUs')}</h4>
               <a href="tel:+966531995976" dir="ltr" style={{ textAlign: 'start' }}>📞 ‎+966 53 199 5976</a>
               <a href="https://wa.me/966531995976" target="_blank" rel="noopener" dir="ltr" style={{ textAlign: 'start' }}>💬 WhatsApp</a>
-              <a href="mailto:rwaalhrmyn@gmail.com" dir="ltr" style={{ textAlign: 'start' }}>✉️ rwaalhrmyn@gmail.com</a>
+              <a href="mailto:info@riwaalharamain.info" dir="ltr" style={{ textAlign: 'start' }}>✉️ info@riwaalharamain.info</a>
             </div>
             <div>
               <h4>{t('ftrProducts')}</h4>

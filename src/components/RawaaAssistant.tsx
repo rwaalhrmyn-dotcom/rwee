@@ -82,11 +82,11 @@ export default function RawaaAssistant() {
       if (/(الدفع ما|فشل الدفع|ما تم الدفع|مشكله في الدفع|الدفع لا يعمل|خصم|خُصم|انخصم|دفعت ولم|اتمام الدفع)/.test(s))
         return { text: en ? 'If a payment did not complete, your order stays pending and no amount is captured — just try paying again from your orders. If an amount was deducted without an order, contact us and we will resolve it.' : 'إن لم يكتمل الدفع يبقى طلبك معلّقاً ولا يُخصم أي مبلغ — أعد المحاولة من «طلباتي». وإن خُصم مبلغ دون طلب، تواصل معنا وسنحلّها فوراً: ‎+966 53 199 5976.', to: '/customer', cta: en ? 'My orders' : 'طلباتي' }
       if (/(الغاء|إلغاء|الغي|استرجاع|استرداد|ارجاع|refund)/.test(s))
-        return { text: en ? 'To cancel or request a refund, contact us on WhatsApp +966 53 199 5976 or rwaalhrmyn@gmail.com with your order number and we will help.' : 'لإلغاء الطلب أو طلب استرجاع، تواصل معنا عبر واتساب ‎+966 53 199 5976 أو rwaalhrmyn@gmail.com مع رقم طلبك وسنساعدك.' }
+        return { text: en ? 'To cancel or request a refund, contact us on WhatsApp +966 53 199 5976 or info@riwaalharamain.info with your order number and we will help.' : 'لإلغاء الطلب أو طلب استرجاع، تواصل معنا عبر واتساب ‎+966 53 199 5976 أو info@riwaalharamain.info مع رقم طلبك وسنساعدك.' }
       if (/(تالف|مكسور|ناقص|منتج خطا|غلط الطلب|مختلف|خطا في الطلب|جوده)/.test(s))
         return { text: en ? "Sorry about that. Send us a photo on WhatsApp +966 53 199 5976 and we'll arrange a replacement or refund." : 'نأسف لذلك. أرسل لنا صورة عبر واتساب ‎+966 53 199 5976 وسنرتّب استبدالاً أو استرداداً.' }
       if (/(مشكله|مشكلة|شكوى|اشتكي|مو راضي|غير راضي|ساعدني|مساعده|ماذا افعل|عطل)/.test(s))
-        return { text: en ? "I'm here to help. Tell me briefly what happened, or reach us directly on WhatsApp +966 53 199 5976 · rwaalhrmyn@gmail.com." : 'أنا هنا لمساعدتك. أخبرني باختصار بما حدث، أو تواصل معنا مباشرة عبر واتساب ‎+966 53 199 5976 · rwaalhrmyn@gmail.com.' }
+        return { text: en ? "I'm here to help. Tell me briefly what happened, or reach us directly on WhatsApp +966 53 199 5976 · info@riwaalharamain.info." : 'أنا هنا لمساعدتك. أخبرني باختصار بما حدث، أو تواصل معنا مباشرة عبر واتساب ‎+966 53 199 5976 · info@riwaalharamain.info.' }
       // ——— general ———
       if (/(تتبع|تابع|وين|اين|حاله|طلبي|طلبات|شحنه|توصيل وصل)/.test(s))
         return { text: en ? 'Track your orders and their status from your account page.' : 'تابع طلباتك وحالتها من صفحة «حسابي».', to: '/customer', cta: en ? 'My orders' : 'طلباتي' }
@@ -95,7 +95,7 @@ export default function RawaaAssistant() {
       if (/(توصيل|شحن|يوصل|تغطيه|مكان التوصيل|خريطه)/.test(s))
         return { text: en ? 'We deliver to mosques and homes. Pin your exact location on the map at checkout.' : 'نوصّل للمساجد والمنازل. حدّد موقعك بدقّة على الخريطة عند إتمام الطلب.', to: '/products', cta: en ? 'Shop now' : 'تسوّق الآن' }
       if (/(تواصل|اتصال|واتس|whatsapp|رقم|جوال|ايميل|بريد|دعم|شكوى|خدمه العملاء)/.test(s))
-        return { text: en ? 'Contact us: +966 53 199 5976 (call / WhatsApp) · rwaalhrmyn@gmail.com' : 'تواصل معنا: ‎+966 53 199 5976 (اتصال/واتساب) · rwaalhrmyn@gmail.com' }
+        return { text: en ? 'Contact us: +966 53 199 5976 (call / WhatsApp) · info@riwaalharamain.info' : 'تواصل معنا: ‎+966 53 199 5976 (اتصال/واتساب) · info@riwaalharamain.info' }
       if (/(ولاء|نقاط|مكافا|مكافآت|خصم)/.test(s))
         return { text: en ? 'Rawaa Rewards gives you points with every order.' : 'برنامج مكافآت رِواء يمنحك نقاطاً مع كل طلب.', to: '/loyalty', cta: en ? 'Rewards' : 'المكافآت' }
       if (/(مورد|بائع|انضم|اسجل كمورد|شركه|منشاه|تاجر)/.test(s))
