@@ -29,12 +29,13 @@ function toRow(r: any) {
 
 export default function ImportProducts() {
   const [supplierId, setSupplierId] = useState<string | null>(null)
+  const [supplierCities, setSupplierCities] = useState<string[]>(['makkah', 'madinah'])
   const [rows, setRows] = useState<any[]>([])
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
   useEffect(() => { (async () => {
     const { data } = await supabase.rpc('my_supplier_accounts')
     const s = Array.isArray(data) && data[0] ? data[0] : null
-    if (s) setSupplierId(s.id || s.supplier_id)
+    if (s) { setSupplierId(s.id || s.supplier_id); if (Array.isArray(s.cities) && s.cities.length) setSupplierCities(s.cities) }
   })() }, [])
 
   const onFile = async (file: File) => {
@@ -52,7 +53,13 @@ export default function ImportProducts() {
     if (!supplierId) { setMsg('لا منشأة معتمدة.'); return }
     if (rows.length === 0 || rows.length > 200) { setMsg('عدد الصفوف يجب أن يكون بين 1 و200.'); return }
     setBusy(true); setMsg(null)
-    const { data, error } = await supabase.rpc('supplier_import_products', { p_supplier_id: supplierId, p_rows: rows, p_request_id: crypto.randomUUID() })
+    // Clamp each row's cities to the supplier's approved cities (fallback to all of them)
+    // so an out-of-range city in the file can never fail the whole import.
+    const safeRows = rows.map(r => {
+      const cities = (Array.isArray(r.cities) ? r.cities : []).filter((c: string) => supplierCities.includes(c))
+      return { ...r, cities: cities.length ? cities : supplierCities }
+    })
+    const { data, error } = await supabase.rpc('supplier_import_products', { p_supplier_id: supplierId, p_rows: safeRows, p_request_id: crypto.randomUUID() })
     setBusy(false)
     if (error) setMsg('تعذّر الاستيراد: ' + error.message)
     else { setMsg(`تم استيراد ${Array.isArray(data) ? data.length : rows.length} منتجاً بنجاح.`); setRows([]) }
