@@ -73,16 +73,50 @@ export default function LocationPicker({
     try {
       const c = CITY_CENTER[city] || CITY_CENTER.makkah
       const map = L.map(mapEl.current, { zoomControl: true }).setView([c.lat, c.lng], 12)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20, subdomains: 'abcd', crossOrigin: true, attribution: '© OpenStreetMap, © CARTO',
-      }).addTo(map)
+
+      // Tile layers with automatic fallback. No crossOrigin: for a basemap we
+      // only display tiles (never read their pixels), and requiring CORS makes
+      // a CDN edge without the header return a blank/grey map. A fallback to
+      // OpenStreetMap kicks in if CARTO tiles fail repeatedly.
+      const providers = [
+        { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', opts: { subdomains: 'abcd', maxZoom: 20, attribution: '© OpenStreetMap, © CARTO' } },
+        { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { maxZoom: 19, attribution: '© OpenStreetMap' } },
+      ]
+      let pIdx = 0
+      let layer: L.TileLayer | null = null
+      const addTiles = () => {
+        const p = providers[pIdx]
+        layer = L.tileLayer(p.url, p.opts as any)
+        let errs = 0
+        layer.on('tileerror', () => {
+          errs++
+          if (errs >= 5 && pIdx < providers.length - 1) {
+            pIdx++
+            if (layer) map.removeLayer(layer)
+            addTiles()
+          }
+        })
+        layer.addTo(map)
+      }
+      addTiles()
+
       map.on('click', (e: L.LeafletMouseEvent) => commit(e.latlng.lat, e.latlng.lng))
       mapRef.current = map
       setReady(true)
-      setTimeout(() => map.invalidateSize(), 150)
-      setTimeout(() => map.invalidateSize(), 600)
+      // The map lives inside a lazy/Suspense card; make sure Leaflet re-measures
+      // the container once it is laid out and whenever it resizes.
+      const fix = () => map.invalidateSize()
+      ;[120, 400, 900].forEach(ms => setTimeout(fix, ms))
+      let ro: ResizeObserver | null = null
+      if (typeof ResizeObserver !== 'undefined' && mapEl.current) {
+        ro = new ResizeObserver(fix); ro.observe(mapEl.current)
+      }
+      ;(mapRef as any)._ro = ro
     } catch { setErr('تعذّر تحميل الخريطة. اكتب العنوان يدوياً وسنتواصل لتأكيد الموقع.') }
-    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null } }
+    return () => {
+      try { (mapRef as any)._ro?.disconnect() } catch { /* noop */ }
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null }
+    }
   }, [])
 
   useEffect(() => {
