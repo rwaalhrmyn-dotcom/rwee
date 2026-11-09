@@ -16,7 +16,28 @@ export default function Checkout() {
   const [phone, setPhone] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [method, setMethod] = useState<'oto' | 'supplier'>('oto')
+  const [delv, setDelv] = useState<{ supplier_delivery_available: boolean; parcels: number; supplier_delivery_halalas: number; oto_waybill_halalas: number } | null>(null)
   const nav = useNavigate()
+
+  // Delivery options for this cart: supplier delivery shows only if every
+  // supplier in the basket accepts it; otherwise OTO shipping is used.
+  useEffect(() => {
+    if (items.length === 0) return
+    (async () => {
+      const { data } = await supabase.rpc('delivery_options', { p_product_ids: items.map(i => i.id) })
+      const o = Array.isArray(data) ? data[0] : data
+      if (o) { setDelv(o); if (!o.supplier_delivery_available) setMethod('oto') }
+    })()
+  }, [items])
+
+  const parcels = delv?.parcels || 1
+  const deliveryHalalas = delv
+    ? (method === 'supplier' ? delv.supplier_delivery_halalas : delv.oto_waybill_halalas) * parcels
+    : 0
+  const baseHalalas = total + deliveryHalalas
+  const grandHalalas = Math.round(baseHalalas * 1.15) // 15% VAT on products + delivery
+  const vatHalalas = grandHalalas - baseHalalas
 
   // prefill returning customer's saved details
   useEffect(() => {
@@ -50,6 +71,9 @@ export default function Checkout() {
       p_request_id: crypto.randomUUID(), p_customization: {}, p_loyalty_points: 0,
     })
     if (error) { setBusy(false); setMsg('تعذّر إنشاء الطلب: ' + error.message); return }
+    // 1b) record the delivery method — the fee is computed and stored server-side
+    const dset = await supabase.rpc('set_order_delivery', { p_order_id: orderId, p_method: method })
+    if (dset.error) { setBusy(false); setMsg('تعذّر تحديد طريقة التوصيل: ' + dset.error.message); return }
     // save the customer's details for next time (opportunistic, non-blocking)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -95,10 +119,30 @@ export default function Checkout() {
           </Suspense></div>
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
+
+        <div className="field"><label>طريقة التوصيل</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'oto' ? 'rgba(7,84,66,0.06)' : undefined }}>
+              <input type="radio" name="deliv" checked={method === 'oto'} onChange={() => setMethod('oto')} />
+              <span style={{ flex: 1 }}>الشحن عبر أوتو (OTO)</span>
+              <strong>{sar((delv?.oto_waybill_halalas || 800) * parcels)}</strong>
+            </label>
+            {delv?.supplier_delivery_available && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'supplier' ? 'rgba(7,84,66,0.06)' : undefined }}>
+                <input type="radio" name="deliv" checked={method === 'supplier'} onChange={() => setMethod('supplier')} />
+                <span style={{ flex: 1 }}>التوصيل عبر المورد</span>
+                <strong>{sar((delv?.supplier_delivery_halalas || 25) * parcels)}</strong>
+              </label>
+            )}
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>تظهر قيمة التوصيل/البوليصة كإجمالي واحد شامل{parcels > 1 ? ` (${parcels} طرود)` : ''}.</p>
+        </div>
+
         <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">إجمالي المنتجات</span><span>{sar(total)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">ضريبة القيمة المضافة (15%)</span><span>{sar(Math.round(total * 0.15))}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(Math.round(total * 1.15))}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">{method === 'supplier' ? 'التوصيل عبر المورد' : 'الشحن عبر أوتو'}</span><span>{sar(deliveryHalalas)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">ضريبة القيمة المضافة (15%)</span><span>{sar(vatHalalas)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(grandHalalas)}</span></div>
         </div>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
         {(() => {

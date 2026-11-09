@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase, SUPABASE_URL } from '../../lib/supabase'
 import { sar } from '../../lib/format'
 import { Link } from 'react-router-dom'
 
@@ -113,6 +113,24 @@ function Orders() {
     const { error } = await supabase.rpc('admin_set_order_paid', { p_order_id: id, p_paid: paid })
     if (error) setMsg('تعذّر: ' + error.message); else reload()
   }
+  const [shipping, setShipping] = useState<string | null>(null)
+  const createShipment = async (id: string) => {
+    if (!confirm('إنشاء شحنة عبر OTO لهذا الطلب؟')) return
+    setShipping(id); setMsg(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setMsg('انتهت الجلسة، سجّل الدخول من جديد.'); setShipping(null); return }
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/oto-create-shipment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ order_id: id }),
+      })
+      const out = await res.json().catch(() => ({}))
+      if (out.ok) { setMsg(out.already ? 'الطلب مُسجّل مسبقاً في OTO.' : (out.note || 'تم إنشاء الشحنة في OTO.')); reload() }
+      else setMsg('تعذّر إنشاء الشحنة: ' + (out.error || 'خطأ غير معروف') + (out.detail ? ' — ' + JSON.stringify(out.detail).slice(0, 180) : ''))
+    } catch (e: any) { setMsg('تعذّر الاتصال بخدمة الشحن: ' + (e?.message || String(e))) }
+    setShipping(null)
+  }
   if (loading) return <p className="muted">جارٍ التحميل…</p>
   if (err) return <div className="note">خطأ: {err}</div>
   return (
@@ -127,15 +145,22 @@ function Orders() {
               <span className="muted" style={{ fontSize: 13 }}>{o.city} — {o.address}</span>
             </div>
             <div style={{ textAlign: 'end' }}>
-              <div className="price">{sar(o.total_halalas)}</div>
+              <div className="price">{sar(o.total_halalas || ((o.subtotal_halalas || 0) + (o.delivery_halalas || 0)))}</div>
               <span className="badge" style={{ background: o.payment_status === 'paid' ? 'var(--green)' : undefined, color: o.payment_status === 'paid' ? '#fff' : undefined }}>{o.payment_status === 'paid' ? 'مدفوع' : 'غير مدفوع'}</span>
             </div>
+          </div>
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+            التوصيل: {o.delivery_method === 'supplier' ? 'عبر المورد' : o.delivery_method === 'oto' ? 'شحن OTO' : '—'}
+            {o.delivery_halalas ? ` · ${sar(o.delivery_halalas)}` : ''}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
             <select value={o.status} onChange={e => setStatus(o.id, e.target.value)} style={{ maxWidth: 170 }}>
               {Object.entries(ORDER_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
             <button className="btn ghost" style={{ padding: '6px 12px' }} onClick={() => setPaid(o.id, o.payment_status !== 'paid')}>{o.payment_status === 'paid' ? 'إلغاء الدفع' : 'تحديد مدفوع'}</button>
+            {o.delivery_method !== 'supplier' && (
+              <button className="btn ghost" style={{ padding: '6px 12px' }} disabled={shipping === o.id} onClick={() => createShipment(o.id)}>{shipping === o.id ? 'جارٍ…' : 'إنشاء شحنة OTO'}</button>
+            )}
             <button className="btn ghost" style={{ padding: '6px 12px' }} onClick={() => showItems(o.id)}>{open === o.id ? 'إخفاء' : 'المنتجات'}</button>
             <span className="muted" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString('ar-SA')}</span>
           </div>
@@ -192,6 +217,7 @@ function Suppliers() {
             <Row k="البريد" v={a.email || a.owner_email} />
             <Row k="العنوان الوطني والمستودع" v={a.national_address} />
             <Row k="الآيبان (يطابق المنشأة)" v={a.iban} />
+            <Row k="يقبل التوصيل عبر مندوبيه" v={a.accepts_delivery ? 'نعم' : 'لا'} />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' }}>
             <button className="btn ghost" style={{ padding: '5px 12px', fontSize: 13 }} onClick={() => viewDoc(a.document_path)}>📄 السجل التجاري</button>

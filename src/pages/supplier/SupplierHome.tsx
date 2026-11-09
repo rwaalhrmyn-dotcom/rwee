@@ -8,6 +8,7 @@ type Acct = {
   national_address: string | null; warehouse_city: string | null
   warehouse_name: string | null; warehouse_address: string | null
   products_count: number; active_products: number; low_stock: number
+  accepts_delivery: boolean
 }
 
 const STATUS: Record<string, { label: string; color: string }> = {
@@ -42,6 +43,15 @@ export default function SupplierHome() {
   )
 
   const cityLabel = (k?: string | null) => (k && CITIES[k]) || k || '—'
+
+  const toggleDelivery = async (id: string, next: boolean) => {
+    setAccounts(prev => prev.map(a => a.id === id ? { ...a, accepts_delivery: next } : a))
+    const { error } = await supabase.rpc('supplier_set_accepts_delivery', { p_supplier: id, p_accepts: next })
+    if (error) {
+      setErr('تعذّر تحديث خيار التوصيل: ' + error.message)
+      setAccounts(prev => prev.map(a => a.id === id ? { ...a, accepts_delivery: !next } : a))
+    }
+  }
 
   return (
     <section style={{ padding: '32px 0', maxWidth: 760 }}>
@@ -100,6 +110,15 @@ export default function SupplierHome() {
                     لديك {a.low_stock} منتج بمخزون منخفض — حدّث الكميات من المخزون لتفادي نفادها.
                   </div>
                 )}
+
+                {/* Self-delivery opt-in */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={!!a.accepts_delivery} onChange={e => toggleDelivery(a.id, e.target.checked)} />
+                  <span style={{ flex: 1, fontSize: 14 }}>أقبل توصيل الطلبات عبر مندوبي منشأتي
+                    <span className="muted" style={{ display: 'block', fontSize: 12 }}>عند التفعيل يظهر للعميل خيار «التوصيل عبر المورد» عند الدفع.</span>
+                  </span>
+                  <span className="badge" style={{ background: a.accepts_delivery ? 'var(--green)' : 'var(--line)', color: a.accepts_delivery ? '#fff' : 'inherit' }}>{a.accepts_delivery ? 'مفعّل' : 'متوقف'}</span>
+                </label>
 
                 <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                   <Link className="btn" to="/supplier/inventory">إدارة المخزون والأسعار (ر.س)</Link>

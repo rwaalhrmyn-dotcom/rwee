@@ -10,6 +10,7 @@ export default function SupplierRegister() {
     phone: '', email: '', national_address: '', tax_number: '', city: 'makkah', category: 'water', iban: '',
   })
   const [isOwner, setIsOwner] = useState(true)
+  const [acceptsDelivery, setAcceptsDelivery] = useState(false)
   const [crDoc, setCrDoc] = useState<File | null>(null)
   const [authDoc, setAuthDoc] = useState<File | null>(null)
   const [licenseDoc, setLicenseDoc] = useState<File | null>(null)
@@ -63,6 +64,7 @@ export default function SupplierRegister() {
         manager_name: f.manager_name.trim(), manager_title: f.manager_title.trim(),
         national_address: f.national_address.trim(), tax_number: f.tax_number || null,
         authorization_doc_path: authPath, license_doc_path: licensePath,
+        accepts_delivery: acceptsDelivery,
       })
       setBusy(false)
       if (error) setMsg('تعذّر إرسال الطلب: ' + error.message); else setOk(true)
@@ -111,6 +113,11 @@ export default function SupplierRegister() {
         {field('الرقم الضريبي (إن وُجد)', <input value={f.tax_number} onChange={e => set('tax_number', e.target.value.replace(/\D/g, '').slice(0, 15))} placeholder="15 رقماً — اتركه فارغاً إن لم ينطبق" />)}
         {field('الرخصة التجارية/الصناعية (حسب النشاط)', <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setLicenseDoc(e.target.files?.[0] || null)} />, 'ترفقها إن كان نشاطك يتطلب ترخيصاً.')}
         {field('رقم الآيبان البنكي (IBAN) *', <input value={f.iban} onChange={e => set('iban', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24))} placeholder="SA0000000000000000000000" />, 'يجب أن يطابق المستفيد اسم المنشأة — يُتحقق قبل صرف المستحقات.')}
+
+        <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', margin: '6px 0' }}>
+          <input type="checkbox" checked={acceptsDelivery} onChange={e => setAcceptsDelivery(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>أقبل توصيل الطلبات عبر مندوبي منشأتي (يظهر للعميل خيار «التوصيل عبر المورد»). يمكنك تغيير ذلك لاحقاً من لوحة المورد.</span>
+        </label>
 
         <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', margin: '14px 0 6px' }}>
           <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
