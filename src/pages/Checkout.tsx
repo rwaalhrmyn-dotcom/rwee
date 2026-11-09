@@ -125,7 +125,7 @@ export default function Checkout() {
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'oto' ? 'rgba(7,84,66,0.06)' : undefined }}>
               <input type="radio" name="deliv" checked={method === 'oto'} onChange={() => setMethod('oto')} />
               <span style={{ flex: 1 }}>الشحن عبر أوتو (OTO)</span>
-              <strong>{sar((delv?.oto_waybill_halalas || 800) * parcels)}</strong>
+              <span className="muted" style={{ fontSize: 13 }}>ضمن بوليصة الشحن</span>
             </label>
             {delv?.supplier_delivery_available && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'supplier' ? 'rgba(7,84,66,0.06)' : undefined }}>
@@ -135,12 +135,12 @@ export default function Checkout() {
               </label>
             )}
           </div>
-          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>تظهر قيمة التوصيل/البوليصة كإجمالي واحد شامل{parcels > 1 ? ` (${parcels} طرود)` : ''}.</p>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{method === 'supplier' ? `رسوم التوصيل عبر المورد تُضاف للإجمالي${parcels > 1 ? ` (${parcels} طرود)` : ''}.` : 'قيمة شحن أوتو تُسدّد ضمن بوليصة الشحن ولا تُضاف هنا.'}</p>
         </div>
 
         <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">إجمالي المنتجات</span><span>{sar(total)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">{method === 'supplier' ? 'التوصيل عبر المورد' : 'الشحن عبر أوتو'}</span><span>{sar(deliveryHalalas)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">{method === 'supplier' ? 'التوصيل عبر المورد' : 'الشحن عبر أوتو'}</span><span>{method === 'supplier' ? sar(deliveryHalalas) : <span className="muted" style={{ fontSize: 13 }}>ضمن البوليصة</span>}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">ضريبة القيمة المضافة (15%)</span><span>{sar(vatHalalas)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(grandHalalas)}</span></div>
         </div>
