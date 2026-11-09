@@ -78,9 +78,13 @@ export default function LocationPicker({
       // only display tiles (never read their pixels), and requiring CORS makes
       // a CDN edge without the header return a blank/grey map. A fallback to
       // OpenStreetMap kicks in if CARTO tiles fail repeatedly.
+      // Esri ArcGIS tiles — free, no API key, production-friendly (unlike the
+      // public OSM tile server which returns 403 to production sites, and CARTO
+      // basemaps which now require an API key). Esri uses {z}/{y}/{x} order.
+      const esriAttr = 'Tiles © Esri'
       const providers = [
-        { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', opts: { subdomains: 'abcd', maxZoom: 20, attribution: '© OpenStreetMap, © CARTO' } },
-        { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { maxZoom: 19, attribution: '© OpenStreetMap' } },
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', opts: { maxZoom: 19, attribution: esriAttr } },
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', opts: { maxZoom: 19, attribution: esriAttr } },
       ]
       let pIdx = 0
       let layer: L.TileLayer | null = null

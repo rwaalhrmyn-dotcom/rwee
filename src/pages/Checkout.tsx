@@ -120,27 +120,29 @@ export default function Checkout() {
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
 
-        <div className="field"><label>طريقة التوصيل</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'oto' ? 'rgba(7,84,66,0.06)' : undefined }}>
-              <input type="radio" name="deliv" checked={method === 'oto'} onChange={() => setMethod('oto')} />
-              <span style={{ flex: 1 }}>الشحن عبر أوتو (OTO)</span>
-              <span className="muted" style={{ fontSize: 13 }}>ضمن بوليصة الشحن</span>
-            </label>
-            {delv?.supplier_delivery_available && (
+        {delv?.supplier_delivery_available && (
+          <div className="field"><label>طريقة التوصيل</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'oto' ? 'rgba(7,84,66,0.06)' : undefined }}>
+                <input type="radio" name="deliv" checked={method === 'oto'} onChange={() => setMethod('oto')} />
+                <span style={{ flex: 1 }}>توصيل المنصة</span>
+                <span className="muted" style={{ fontSize: 13 }}>مجاناً</span>
+              </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10, cursor: 'pointer', background: method === 'supplier' ? 'rgba(7,84,66,0.06)' : undefined }}>
                 <input type="radio" name="deliv" checked={method === 'supplier'} onChange={() => setMethod('supplier')} />
                 <span style={{ flex: 1 }}>التوصيل عبر المورد</span>
                 <strong>{sar((delv?.supplier_delivery_halalas || 25) * parcels)}</strong>
               </label>
-            )}
+            </div>
+            {method === 'supplier' && <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>رسوم التوصيل عبر المورد تُضاف للإجمالي{parcels > 1 ? ` (${parcels} طرود)` : ''}.</p>}
           </div>
-          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{method === 'supplier' ? `رسوم التوصيل عبر المورد تُضاف للإجمالي${parcels > 1 ? ` (${parcels} طرود)` : ''}.` : 'قيمة شحن أوتو تُسدّد ضمن بوليصة الشحن ولا تُضاف هنا.'}</p>
-        </div>
+        )}
 
         <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">إجمالي المنتجات</span><span>{sar(total)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">{method === 'supplier' ? 'التوصيل عبر المورد' : 'الشحن عبر أوتو'}</span><span>{method === 'supplier' ? sar(deliveryHalalas) : <span className="muted" style={{ fontSize: 13 }}>ضمن البوليصة</span>}</span></div>
+          {method === 'supplier' && deliveryHalalas > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">التوصيل عبر المورد</span><span>{sar(deliveryHalalas)}</span></div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span className="muted">ضريبة القيمة المضافة (15%)</span><span>{sar(vatHalalas)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 8, fontSize: 17 }}><span>الإجمالي شامل الضريبة</span><span className="price">{sar(grandHalalas)}</span></div>
         </div>
