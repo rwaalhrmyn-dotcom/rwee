@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Open-source delivery-location picker: Leaflet + OpenStreetMap (no paid key).
-// The customer drops/drags a pin; we reverse-geocode it (Nominatim) into an
-// address and also hand the parent the exact coordinates for the courier.
+// The customer drops/drags a pin; we keep the exact coordinates for the courier.
+// Reverse geocoding (address from coordinates) is best-effort only — if the
+// public geocoder is unavailable the pin still works and the coordinates are saved.
 
 export type LatLng = { lat: number; lng: number }
 
@@ -11,23 +12,39 @@ const CITY_CENTER: Record<string, LatLng> = {
   madinah: { lat: 24.4672, lng: 39.6111 },
 }
 
+const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4'
+const FALLBACK = 'https://unpkg.com/leaflet@1.9.4/dist'
+
 let leafletLoading: Promise<void> | null = null
+function addScript(src: string) {
+  return new Promise<void>((resolve, reject) => {
+    const s = document.createElement('script'); s.src = src; s.async = true
+    s.onload = () => resolve(); s.onerror = () => reject(new Error('load failed'))
+    document.head.appendChild(s)
+  })
+}
 function loadLeaflet(): Promise<void> {
   if ((window as any).L) return Promise.resolve()
   if (leafletLoading) return leafletLoading
-  leafletLoading = new Promise((resolve, reject) => {
+  leafletLoading = (async () => {
     const css = document.createElement('link')
-    css.rel = 'stylesheet'
-    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'
+    css.rel = 'stylesheet'; css.href = `${CDN}/leaflet.min.css`
+    css.onerror = () => { css.href = `${FALLBACK}/leaflet.css` }
     document.head.appendChild(css)
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
-    s.async = true
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error('leaflet load failed'))
-    document.head.appendChild(s)
-  })
+    try { await addScript(`${CDN}/leaflet.min.js`) }
+    catch { await addScript(`${FALLBACK}/leaflet.js`) }
+  })()
   return leafletLoading
+}
+
+function markerIcon(L: any) {
+  // Explicit icon URLs so the pin is always visible with CDN-hosted Leaflet.
+  return L.icon({
+    iconUrl: `${CDN}/images/marker-icon.png`,
+    iconRetinaUrl: `${CDN}/images/marker-icon-2x.png`,
+    shadowUrl: `${CDN}/images/marker-shadow.png`,
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+  })
 }
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
@@ -36,11 +53,10 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=ar&zoom=18`,
       { headers: { Accept: 'application/json' } },
     )
+    if (!r.ok) return ''
     const j = await r.json()
     return (j?.display_name as string) || ''
-  } catch {
-    return ''
-  }
+  } catch { return '' }
 }
 
 export default function LocationPicker({
@@ -57,59 +73,54 @@ export default function LocationPicker({
   const [ready, setReady] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [located, setLocated] = useState<LatLng | null>(null)
 
-  const place = async (lat: number, lng: number, recenter = false) => {
+  const place = (lat: number, lng: number, recenter = false) => {
     const L = (window as any).L
     if (!L || !mapRef.current) return
     if (!markerRef.current) {
-      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current)
-      markerRef.current.on('dragend', () => {
-        const p = markerRef.current.getLatLng()
-        commit(p.lat, p.lng)
-      })
-    } else {
-      markerRef.current.setLatLng([lat, lng])
-    }
+      markerRef.current = L.marker([lat, lng], { draggable: true, icon: markerIcon(L) }).addTo(mapRef.current)
+      markerRef.current.on('dragend', () => { const p = markerRef.current.getLatLng(); commit(p.lat, p.lng) })
+    } else { markerRef.current.setLatLng([lat, lng]) }
     if (recenter) mapRef.current.setView([lat, lng], 16)
-    onLocation?.({ lat, lng })
   }
 
   const commit = async (lat: number, lng: number) => {
-    await place(lat, lng)
+    place(lat, lng)
+    setLocated({ lat, lng })
+    onLocation?.({ lat, lng })
     setBusy(true)
     const addr = await reverseGeocode(lat, lng)
     setBusy(false)
-    if (addr) onChange(addr)
+    if (addr) onChange(addr) // only fills when the geocoder is available; otherwise the pin + coords are enough
   }
 
   useEffect(() => {
     let cancelled = false
     loadLeaflet().then(() => {
-      if (cancelled || !mapEl.current) return
+      if (cancelled || !mapEl.current || (window as any).L == null) return
       const L = (window as any).L
       const c = CITY_CENTER[city] || CITY_CENTER.makkah
-      const map = L.map(mapEl.current, { attributionControl: true }).setView([c.lat, c.lng], 12)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap',
+      const map = L.map(mapEl.current).setView([c.lat, c.lng], 12)
+      // CARTO Voyager — open basemap built on OpenStreetMap data, reliable for production.
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20, crossOrigin: true, subdomains: 'abcd',
+        attribution: '© OpenStreetMap, © CARTO',
       }).addTo(map)
       map.on('click', (e: any) => commit(e.latlng.lat, e.latlng.lng))
       mapRef.current = map
       setReady(true)
-      // Leaflet needs a size recalculation once its container is laid out.
       setTimeout(() => map.invalidateSize(), 200)
-    }).catch(() => setErr('تعذّر تحميل الخريطة. يمكنك كتابة العنوان يدوياً.'))
+    }).catch(() => setErr('تعذّر تحميل الخريطة. اكتب العنوان يدوياً وسنتواصل لتأكيد الموقع.'))
     return () => {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null }
     }
   }, [])
 
-  // Recenter when the chosen city changes (before a pin is dropped).
   useEffect(() => {
     if (!mapRef.current || markerRef.current) return
-    const c = CITY_CENTER[city]
-    if (c) mapRef.current.setView([c.lat, c.lng], 12)
+    const c = CITY_CENTER[city]; if (c) mapRef.current.setView([c.lat, c.lng], 12)
   }, [city])
 
   const locateMe = () => {
@@ -122,6 +133,12 @@ export default function LocationPicker({
     )
   }
 
+  const status = busy ? 'جارٍ التحديد…'
+    : err ? err
+    : located ? '✓ تم تحديد موقعك على الخريطة — أضف تفاصيل المبنى/الشقة في الحقل أعلاه إن رغبت.'
+    : ready ? 'انقر على الخريطة أو اسحب الدبوس أو اضغط «موقعي الحالي» لتحديد مكان التوصيل بدقّة.'
+    : 'جارٍ تحميل الخريطة…'
+
   return (
     <div>
       <input
@@ -131,20 +148,11 @@ export default function LocationPicker({
         style={{ marginBottom: 8 }}
       />
       <div style={{ position: 'relative' }}>
-        <div
-          ref={mapEl}
-          style={{ height: 260, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)', background: '#eef3f0' }}
-        />
-        <button
-          type="button"
-          onClick={locateMe}
-          className="btn ghost"
-          style={{ position: 'absolute', zIndex: 500, insetInlineEnd: 10, top: 10, padding: '7px 12px', fontSize: 13, background: '#fff' }}
-        >📍 موقعي الحالي</button>
+        <div ref={mapEl} style={{ height: 260, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)', background: '#eef3f0' }} />
+        <button type="button" onClick={locateMe} className="btn ghost"
+          style={{ position: 'absolute', zIndex: 500, insetInlineEnd: 10, top: 10, padding: '7px 12px', fontSize: 13, background: '#fff' }}>📍 موقعي الحالي</button>
       </div>
-      <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-        {busy ? 'جارٍ تحديد العنوان…' : err ? err : ready ? 'انقر على الخريطة أو اسحب الدبوس لتحديد مكان التوصيل بدقّة.' : 'جارٍ تحميل الخريطة…'}
-      </p>
+      <p className="muted" style={{ fontSize: 12, marginTop: 6, color: located ? 'var(--green)' : undefined }}>{status}</p>
     </div>
   )
 }
