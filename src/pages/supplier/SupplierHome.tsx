@@ -116,8 +116,15 @@ export default function SupplierHome() {
         )
       })}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-        <Link className="btn ghost" to="/supplier/contract">عقد المورد</Link>
+      <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+        <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>العقد والسياسات</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Link className="btn ghost" to="/supplier/contract">عقد المورد والتوقيع</Link>
+          <Link className="btn ghost" to="/terms">الشروط والأحكام</Link>
+          <Link className="btn ghost" to="/privacy">سياسة الخصوصية</Link>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
         <Link className="btn ghost" to="/supplier/register">إضافة منشأة أخرى</Link>
         <button className="btn ghost" onClick={() => supabase.auth.signOut().then(() => location.reload())}>تسجيل الخروج</button>
       </div>

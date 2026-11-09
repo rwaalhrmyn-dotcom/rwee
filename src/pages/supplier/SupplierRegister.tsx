@@ -112,10 +112,11 @@ export default function SupplierRegister() {
         {field('الرخصة التجارية/الصناعية (حسب النشاط)', <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setLicenseDoc(e.target.files?.[0] || null)} />, 'ترفقها إن كان نشاطك يتطلب ترخيصاً.')}
         {field('رقم الآيبان البنكي (IBAN) *', <input value={f.iban} onChange={e => set('iban', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24))} placeholder="SA0000000000000000000000" />, 'يجب أن يطابق المستفيد اسم المنشأة — يُتحقق قبل صرف المستحقات.')}
 
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '14px 0 6px' }}>
-          <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
-          أوافق على <Link to="/supplier/contract" style={{ color: 'var(--green)' }}>عقد المورد وسياسة الاستخدام</Link>.
+        <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', margin: '14px 0 6px' }}>
+          <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>أوافق على <Link to="/supplier/contract" style={{ color: 'var(--green)' }}>عقد المورد</Link> و<Link to="/terms" style={{ color: 'var(--green)' }}>الشروط والأحكام</Link> و<Link to="/privacy" style={{ color: 'var(--green)' }}>سياسة الخصوصية</Link>.</span>
         </label>
+        <p className="muted" style={{ fontSize: 12, margin: '0 0 6px' }}>يمكنك الاطّلاع على العقد والشروط والخصوصية كاملة قبل الإرسال عبر الروابط أعلاه.</p>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
         <button className="btn" style={{ width: '100%' }} disabled={busy || authed === false} onClick={submit}>{authed === false ? 'سجّل الدخول أولاً' : (busy ? 'جارٍ الإرسال…' : 'إرسال طلب الانضمام ←')}</button>
       </div>
