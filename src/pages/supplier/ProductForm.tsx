@@ -23,7 +23,7 @@ export default function ProductForm() {
     const { error } = await supabase.rpc('supplier_save_product', {
       p_product_id: null, p_supplier_id: supplierId, p_expected_version: 0,
       p_data: { name: f.name, description: f.description, unit: f.unit, category: f.category,
-        price_halalas: Number(f.price), stock: Number(f.stock), cities, active },
+        price_halalas: Math.round(Number(f.price) * 100), stock: Number(f.stock), cities, active },
     })
     setBusy(false)
     if (error) setMsg('تعذّر الحفظ: ' + error.message); else nav('/supplier/inventory')
@@ -41,9 +41,9 @@ export default function ProductForm() {
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
         <div className="field"><label>الوحدة</label><input value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} placeholder="كرتون / حبة / كيس" /></div>
-        <div className="field"><label>صافي سعرك (هللة)</label><input value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/\D/g, '') })} placeholder="مثال: 1500 = 15 ريال" />
+        <div className="field"><label>صافي سعرك بالريال (ر.س)</label><input inputMode="decimal" value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') })} placeholder="مثال: 15 أو 12.50" />
           {f.price && Number(f.price) > 0 && (
-            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>سعر العرض للعميل (شامل رسوم المنصة 35%): <strong style={{ color: 'var(--green)' }}>{(Math.round(Number(f.price) * 1.35) / 100).toFixed(2)} ر.س</strong> · يُحسب تلقائياً عند العرض.</p>
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>سعر العرض للعميل (شامل رسوم المنصة 35% والضريبة عند الدفع): <strong style={{ color: 'var(--green)' }}>{(Number(f.price) * 1.35).toFixed(2)} ر.س</strong> · يُحسب تلقائياً.</p>
           )}</div>
         <div className="field"><label>المخزون</label><input value={f.stock} onChange={e => setF({ ...f, stock: e.target.value.replace(/\D/g, '') })} /></div>
         <div className="field"><label>مدن العرض</label>

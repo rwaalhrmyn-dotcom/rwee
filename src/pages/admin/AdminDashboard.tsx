@@ -163,14 +163,42 @@ function Suppliers() {
     const { error } = await supabase.rpc('admin_set_supplier_status', { p_id: id, p_status: status })
     if (error) setMsg('تعذّر: ' + error.message); else sups.reload()
   }
+  const viewDoc = async (path?: string | null) => {
+    if (!path) { setMsg('لا يوجد مستند مرفق.'); return }
+    const { data, error } = await supabase.storage.from('seller-documents').createSignedUrl(path, 120)
+    if (error || !data?.signedUrl) { setMsg('تعذّر فتح المستند: ' + (error?.message || 'غير متاح')); return }
+    window.open(data.signedUrl, '_blank', 'noopener')
+  }
+  const Row = ({ k, v }: { k: string; v: any }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '2px 0', fontSize: 13 }}>
+      <span className="muted">{k}</span><span style={{ textAlign: 'left', wordBreak: 'break-word' }}>{v || '—'}</span>
+    </div>
+  )
   return (
     <div>
       {msg && <div className="note" style={{ marginBottom: 10 }}>{msg}</div>}
       <h3>طلبات الانضمام</h3>
       {apps.loading ? <p className="muted">جارٍ…</p> : apps.rows.filter(a => a.status === 'pending').length === 0 ? <p className="muted">لا طلبات معلّقة.</p> : apps.rows.filter(a => a.status === 'pending').map(a => (
-        <div className="card" key={a.id} style={{ marginBottom: 10 }}>
-          <strong>{a.business_name}</strong> <span className="badge">{a.category}</span>
-          <div className="muted" style={{ fontSize: 13, margin: '6px 0' }}>سجل تجاري: {a.commercial_registration} · {a.city} · {a.phone}<br />IBAN: {a.iban || '—'} · {a.owner_email}</div>
+        <div className="card" key={a.id} style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <strong style={{ fontSize: 16 }}>{a.business_name}</strong>
+            <span className="badge">{a.category} · {a.city === 'madinah' ? 'المدينة' : 'مكة'}</span>
+          </div>
+          <div style={{ margin: '10px 0', borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+            <Row k="السجل التجاري" v={a.commercial_registration} />
+            <Row k="الرقم الضريبي" v={a.tax_number} />
+            <Row k="المسؤول" v={a.manager_name ? `${a.manager_name} · ${a.manager_title || ''}` : null} />
+            <Row k="الجوال (موثّق OTP)" v={a.phone} />
+            <Row k="البريد" v={a.email || a.owner_email} />
+            <Row k="العنوان الوطني والمستودع" v={a.national_address} />
+            <Row k="الآيبان (يطابق المنشأة)" v={a.iban} />
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' }}>
+            <button className="btn ghost" style={{ padding: '5px 12px', fontSize: 13 }} onClick={() => viewDoc(a.document_path)}>📄 السجل التجاري</button>
+            {a.authorization_doc_path && <button className="btn ghost" style={{ padding: '5px 12px', fontSize: 13 }} onClick={() => viewDoc(a.authorization_doc_path)}>📄 تفويض المسؤول</button>}
+            {a.license_doc_path && <button className="btn ghost" style={{ padding: '5px 12px', fontSize: 13 }} onClick={() => viewDoc(a.license_doc_path)}>📄 الرخصة</button>}
+          </div>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>تحقّق من: تطابق اسم المنشأة مع السجل ونشاطه وصلاحيته · مطابقة مستفيد الآيبان · صحة العنوان الوطني · المستندات قبل الاعتماد.</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" style={{ padding: '6px 14px' }} onClick={() => decide(a.id, true)}>اعتماد ←</button>
             <button className="btn ghost" style={{ padding: '6px 14px' }} onClick={() => decide(a.id, false)}>رفض</button>

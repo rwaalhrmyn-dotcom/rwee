@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase, SUPABASE_URL } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
 import { useNavigate, Link } from 'react-router-dom'
-import LocationPicker, { LatLng } from '../components/LocationPicker'
+import type { LatLng } from '../components/LocationPicker'
+// Leaflet is heavy — load the map only on this page so the rest of the site stays light.
+const LocationPicker = lazy(() => import('../components/LocationPicker'))
 
 export default function Checkout() {
   const { items, total, clear } = useCart()
@@ -87,7 +89,10 @@ export default function Checkout() {
           <select value={city} onChange={e => setCity(e.target.value)}>
             {Object.entries(CITIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div className="field"><label>العنوان ومكان التوصيل</label><LocationPicker value={address} onChange={setAddress} onLocation={setGeo} city={city} /></div>
+        <div className="field"><label>العنوان ومكان التوصيل</label>
+          <Suspense fallback={<div className="muted" style={{ fontSize: 13 }}>جارٍ تحميل الخريطة…</div>}>
+            <LocationPicker value={address} onChange={setAddress} onLocation={setGeo} city={city} />
+          </Suspense></div>
         <div className="field"><label>اسم المستلم</label><input value={name} onChange={e => setName(e.target.value)} /></div>
         <div className="field"><label>رقم الجوال</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
         <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
