@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -9,7 +9,15 @@ export default function SupplierRegister() {
   const [doc, setDoc] = useState<File | null>(null)
   const [agree, setAgree] = useState(false)
   const [msg, setMsg] = useState<string | null>(null); const [ok, setOk] = useState(false); const [busy, setBusy] = useState(false)
+  const [authed, setAuthed] = useState<boolean | null>(null)
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }))
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session)
+      if (data.session?.user?.phone) setF(p => ({ ...p, phone: p.phone || '0' + data.session!.user.phone!.replace(/^\+?966/, '') }))
+    })
+  }, [])
 
   const submit = async () => {
     setBusy(true); setMsg(null)
@@ -40,7 +48,13 @@ export default function SupplierRegister() {
   return (
     <section style={{ padding: '32px 0', maxWidth: 560 }}>
       <h2 style={{ color: 'var(--green)' }}>انضمام مورد جديد</h2>
-      <p className="muted">سجّل الدخول عبر رمز التحقق أولاً، ثم أكمل بيانات منشأتك الرسمية. يبقى الطلب <strong>قيد المراجعة</strong> حتى يعتمده فريق الإدارة. <Link to="/supplier/login" style={{ color: 'var(--green)' }}>دخول ←</Link></p>
+      <p className="muted">سجّل الدخول عبر رمز التحقق أولاً، ثم أكمل بيانات منشأتك الرسمية. يبقى الطلب <strong>قيد المراجعة</strong> حتى يعتمده فريق الإدارة.</p>
+      {authed === false && (
+        <div className="note" style={{ margin: '12px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span>يلزم تسجيل الدخول برمز التحقق قبل إرسال الطلب.</span>
+          <Link className="btn" to="/supplier/login" style={{ padding: '7px 16px' }}>تسجيل الدخول ←</Link>
+        </div>
+      )}
       <div className="card">
         <div className="field"><label>اسم المؤسسة / الشركة الرسمي</label><input value={f.business_name} onChange={e => set('business_name', e.target.value)} /></div>
         <div className="field"><label>رقم السجل التجاري (10 أرقام)</label><input value={f.commercial_registration} onChange={e => set('commercial_registration', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="1010xxxxxx" /></div>
@@ -61,7 +75,7 @@ export default function SupplierRegister() {
           أوافق على <Link to="/terms" style={{ color: 'var(--green)' }}>سياسة الاستخدام والخصوصية</Link>.
         </label>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
-        <button className="btn" style={{ width: '100%' }} disabled={busy || !agree || f.business_name.length < 2 || f.commercial_registration.length !== 10 || f.iban.length !== 24 || !doc || f.phone.length < 9} onClick={submit}>إرسال طلب الانضمام ←</button>
+        <button className="btn" style={{ width: '100%' }} disabled={busy || authed === false || !agree || f.business_name.length < 2 || f.commercial_registration.length !== 10 || f.iban.length !== 24 || !doc || f.phone.length < 9} onClick={submit}>{authed === false ? 'سجّل الدخول أولاً' : 'إرسال طلب الانضمام ←'}</button>
       </div>
     </section>
   )
