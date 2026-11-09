@@ -48,7 +48,7 @@ export default function SupplierRegister() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) throw new Error('البريد الإلكتروني غير صحيح.')
       if (f.phone.replace(/\D/g, '').length < 9) throw new Error('رقم جوال المسؤول مطلوب.')
       if (f.national_address.trim().length < 4) throw new Error('العنوان الوطني وموقع المستودع مطلوبان قبل البيع.')
-      if (f.tax_number && !/^[0-9]{15}$/.test(f.tax_number)) throw new Error('الرقم الضريبي يجب أن يكون 15 رقماً (أو اتركه فارغاً إن لم ينطبق).')
+      if (!/^[0-9]{15}$/.test(f.tax_number)) throw new Error('الرقم الضريبي مطلوب ويجب أن يكون 15 رقماً.')
       if (!/^SA[0-9]{22}$/.test(f.iban)) throw new Error('رقم الآيبان يجب أن يبدأ بـ SA ويتبعه 22 رقماً، ويطابق المستفيد اسم المنشأة.')
       if (!crDoc) throw new Error('صورة السجل التجاري مطلوبة.')
       if (!isOwner && !authDoc) throw new Error('مستند تفويض ممثل المنشأة مطلوب عند عدم كونك صاحب الصلاحية.')
@@ -62,7 +62,7 @@ export default function SupplierRegister() {
         owner_id: user.id, business_name: f.business_name.trim(), commercial_registration: f.commercial_registration,
         phone: f.phone, email: f.email.trim(), city: f.city, category: f.category, document_path: crPath, iban: f.iban,
         manager_name: f.manager_name.trim(), manager_title: f.manager_title.trim(),
-        national_address: f.national_address.trim(), tax_number: f.tax_number || null,
+        national_address: f.national_address.trim(), tax_number: f.tax_number,
         authorization_doc_path: authPath, license_doc_path: licensePath,
         accepts_delivery: acceptsDelivery,
       })
@@ -110,7 +110,7 @@ export default function SupplierRegister() {
         {field('العنوان الوطني وموقع المستودع *', <input value={f.national_address} onChange={e => set('national_address', e.target.value)} placeholder="المدينة، الحي، الرمز البريدي، الرقم الإضافي" />, 'إلزامي قبل البيع — يحدد موقع التوريد.')}
         {field('المدينة', <select value={f.city} onChange={e => set('city', e.target.value)}><option value="makkah">مكة المكرمة</option><option value="madinah">المدينة المنورة</option></select>)}
         {field('فئة المنتجات', <select value={f.category} onChange={e => set('category', e.target.value)}>{Object.entries(CATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>)}
-        {field('الرقم الضريبي (إن وُجد)', <input value={f.tax_number} onChange={e => set('tax_number', e.target.value.replace(/\D/g, '').slice(0, 15))} placeholder="15 رقماً — اتركه فارغاً إن لم ينطبق" />)}
+        {field('الرقم الضريبي (15 رقماً) *', <input value={f.tax_number} onChange={e => set('tax_number', e.target.value.replace(/\D/g, '').slice(0, 15))} placeholder="3xxxxxxxxxxxxxx" inputMode="numeric" />, 'إلزامي — رقم تسجيل ضريبة القيمة المضافة (15 رقماً).')}
         {field('الرخصة التجارية/الصناعية (حسب النشاط)', <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setLicenseDoc(e.target.files?.[0] || null)} />, 'ترفقها إن كان نشاطك يتطلب ترخيصاً.')}
         {field('رقم الآيبان البنكي (IBAN) *', <input value={f.iban} onChange={e => set('iban', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24))} placeholder="SA0000000000000000000000" />, 'يجب أن يطابق المستفيد اسم المنشأة — يُتحقق قبل صرف المستحقات.')}
 
