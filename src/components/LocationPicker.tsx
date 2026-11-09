@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 
-// Open-source delivery-location picker: Leaflet + OpenStreetMap (no paid key).
-// The customer drops/drags a pin; we keep the exact coordinates for the courier.
-// Reverse geocoding (address from coordinates) is best-effort only — if the
-// public geocoder is unavailable the pin still works and the coordinates are saved.
+// Delivery-location picker: Leaflet (bundled, open source) + CARTO/OSM open tiles.
+// The customer drops/drags a pin; the exact coordinates are kept for the courier.
+// Reverse geocoding is best-effort only — the pin always works and saves coordinates.
 
 export type LatLng = { lat: number; lng: number }
 
@@ -12,40 +16,10 @@ const CITY_CENTER: Record<string, LatLng> = {
   madinah: { lat: 24.4672, lng: 39.6111 },
 }
 
-const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4'
-const FALLBACK = 'https://unpkg.com/leaflet@1.9.4/dist'
-
-let leafletLoading: Promise<void> | null = null
-function addScript(src: string) {
-  return new Promise<void>((resolve, reject) => {
-    const s = document.createElement('script'); s.src = src; s.async = true
-    s.onload = () => resolve(); s.onerror = () => reject(new Error('load failed'))
-    document.head.appendChild(s)
-  })
-}
-function loadLeaflet(): Promise<void> {
-  if ((window as any).L) return Promise.resolve()
-  if (leafletLoading) return leafletLoading
-  leafletLoading = (async () => {
-    const css = document.createElement('link')
-    css.rel = 'stylesheet'; css.href = `${CDN}/leaflet.min.css`
-    css.onerror = () => { css.href = `${FALLBACK}/leaflet.css` }
-    document.head.appendChild(css)
-    try { await addScript(`${CDN}/leaflet.min.js`) }
-    catch { await addScript(`${FALLBACK}/leaflet.js`) }
-  })()
-  return leafletLoading
-}
-
-function markerIcon(L: any) {
-  // Explicit icon URLs so the pin is always visible with CDN-hosted Leaflet.
-  return L.icon({
-    iconUrl: `${CDN}/images/marker-icon.png`,
-    iconRetinaUrl: `${CDN}/images/marker-icon-2x.png`,
-    shadowUrl: `${CDN}/images/marker-shadow.png`,
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-  })
-}
+const PIN = L.icon({
+  iconUrl: markerIconUrl, iconRetinaUrl: markerIcon2xUrl, shadowUrl: markerShadowUrl,
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+})
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
@@ -68,19 +42,18 @@ export default function LocationPicker({
   city?: string
 }) {
   const mapEl = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
+  const mapRef = useRef<L.Map | null>(null)
+  const markerRef = useRef<L.Marker | null>(null)
   const [ready, setReady] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [located, setLocated] = useState<LatLng | null>(null)
 
   const place = (lat: number, lng: number, recenter = false) => {
-    const L = (window as any).L
-    if (!L || !mapRef.current) return
+    if (!mapRef.current) return
     if (!markerRef.current) {
-      markerRef.current = L.marker([lat, lng], { draggable: true, icon: markerIcon(L) }).addTo(mapRef.current)
-      markerRef.current.on('dragend', () => { const p = markerRef.current.getLatLng(); commit(p.lat, p.lng) })
+      markerRef.current = L.marker([lat, lng], { draggable: true, icon: PIN }).addTo(mapRef.current)
+      markerRef.current.on('dragend', () => { const p = markerRef.current!.getLatLng(); commit(p.lat, p.lng) })
     } else { markerRef.current.setLatLng([lat, lng]) }
     if (recenter) mapRef.current.setView([lat, lng], 16)
   }
@@ -92,30 +65,24 @@ export default function LocationPicker({
     setBusy(true)
     const addr = await reverseGeocode(lat, lng)
     setBusy(false)
-    if (addr) onChange(addr) // only fills when the geocoder is available; otherwise the pin + coords are enough
+    if (addr) onChange(addr)
   }
 
   useEffect(() => {
-    let cancelled = false
-    loadLeaflet().then(() => {
-      if (cancelled || !mapEl.current || (window as any).L == null) return
-      const L = (window as any).L
+    if (!mapEl.current || mapRef.current) return
+    try {
       const c = CITY_CENTER[city] || CITY_CENTER.makkah
-      const map = L.map(mapEl.current).setView([c.lat, c.lng], 12)
-      // CARTO Voyager — open basemap built on OpenStreetMap data, reliable for production.
+      const map = L.map(mapEl.current, { zoomControl: true }).setView([c.lat, c.lng], 12)
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20, crossOrigin: true, subdomains: 'abcd',
-        attribution: '© OpenStreetMap, © CARTO',
+        maxZoom: 20, subdomains: 'abcd', crossOrigin: true, attribution: '© OpenStreetMap, © CARTO',
       }).addTo(map)
-      map.on('click', (e: any) => commit(e.latlng.lat, e.latlng.lng))
+      map.on('click', (e: L.LeafletMouseEvent) => commit(e.latlng.lat, e.latlng.lng))
       mapRef.current = map
       setReady(true)
-      setTimeout(() => map.invalidateSize(), 200)
-    }).catch(() => setErr('تعذّر تحميل الخريطة. اكتب العنوان يدوياً وسنتواصل لتأكيد الموقع.'))
-    return () => {
-      cancelled = true
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null }
-    }
+      setTimeout(() => map.invalidateSize(), 150)
+      setTimeout(() => map.invalidateSize(), 600)
+    } catch { setErr('تعذّر تحميل الخريطة. اكتب العنوان يدوياً وسنتواصل لتأكيد الموقع.') }
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null } }
   }, [])
 
   useEffect(() => {
