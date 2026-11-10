@@ -23,7 +23,13 @@ h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em}
 .topbar{background:linear-gradient(90deg,var(--deep),var(--green));color:#eafff6;font-size:13px;padding:9px 0;text-align:center;letter-spacing:.01em}
 
 /* header */
-.nav2{background:rgba(252,251,246,.86);backdrop-filter:saturate(1.3) blur(10px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+/* Solid opaque fallback so the header is always visible. Some mobile browsers
+   / in-app webviews fail to paint a translucent sticky element that relies on
+   backdrop-filter, which hid the header for those users. */
+.nav2{background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+@supports ((-webkit-backdrop-filter:blur(10px)) or (backdrop-filter:blur(10px))){
+  .nav2{background:rgba(252,251,246,.86);-webkit-backdrop-filter:saturate(1.3) blur(10px);backdrop-filter:saturate(1.3) blur(10px)}
+}
 .nav2 .bar{display:flex;align-items:center;justify-content:space-between;gap:16px;height:78px}
 .brand{font-weight:700;color:var(--green);font-size:23px;line-height:1.1}
 .brand small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
