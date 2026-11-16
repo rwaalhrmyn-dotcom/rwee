@@ -325,7 +325,7 @@ begin
   select * into sec from private.supplier_gateway_secrets where supplier_id=o.supplier_id;
   if sec.supplier_id is null then return null; end if;
   return jsonb_build_object('order_id', o.id, 'supplier_id', o.supplier_id, 'provider', sec.provider, 'ciphertext', sec.ciphertext, 'iv', sec.iv,
-    'key_version', sec.key_version, 'payable_halalas', o.payable_halalas,
+    'key_version', sec.key_version, 'payable_halalas', o.payable_halalas, 'refunded_halalas', o.refunded_halalas,
     'charge_id', (select c.charge_id from private.gateway_charges c where c.order_id=o.id and c.status in ('captured','partially_refunded') order by c.updated_at desc limit 1));
 end $$;
 
