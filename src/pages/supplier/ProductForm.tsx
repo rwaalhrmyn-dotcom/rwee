@@ -11,6 +11,8 @@ export default function ProductForm() {
   const [active, setActive] = useState(true)
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
   const nav = useNavigate()
+  const [rateBp, setRateBp] = useState(500)
+  useEffect(() => { supabase.rpc('finance_public_settings').then(({ data }) => { if (data?.commission_rate_bp != null) setRateBp(data.commission_rate_bp) }) }, [])
   useEffect(() => { (async () => {
     const { data } = await supabase.rpc('my_supplier_accounts')
     const s = Array.isArray(data) && data[0] ? data[0] : null
@@ -41,9 +43,9 @@ export default function ProductForm() {
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
         <div className="field"><label>الوحدة</label><input value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} placeholder="كرتون / حبة / كيس" /></div>
-        <div className="field"><label>صافي سعرك بالريال (ر.س)</label><input inputMode="decimal" value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') })} placeholder="مثال: 15 أو 12.50" />
+        <div className="field"><label>سعرك الأصلي بالريال (ر.س)</label><input inputMode="decimal" value={f.price} onChange={e => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') })} placeholder="مثال: 15 أو 12.50" />
           {f.price && Number(f.price) > 0 && (
-            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>سعر العرض للعميل (شامل رسوم المنصة 35% والضريبة عند الدفع): <strong style={{ color: 'var(--green)' }}>{(Number(f.price) * 1.35).toFixed(2)} ر.س</strong> · يُحسب تلقائياً.</p>
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>عمولة المنصة الأساسية {rateBp / 100}% من سعرك الأصلي = <strong style={{ color: 'var(--green)' }}>{(Number(f.price) * rateBp / 10000).toFixed(2)} ر.س</strong> للوحدة. يحدد فريق رواء سعر العرض النهائي (قد يشمل زيادة سعرية تُعد عمولة تسويقية إضافية) وتظهر التفاصيل في صفحة المخزون بعد الحفظ.</p>
           )}</div>
         <div className="field"><label>المخزون</label><input value={f.stock} onChange={e => setF({ ...f, stock: e.target.value.replace(/\D/g, '') })} /></div>
         <div className="field"><label>مدن العرض</label>

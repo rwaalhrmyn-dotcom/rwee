@@ -308,3 +308,10 @@ grant execute on function public.admin_preview_pricing_rule(uuid,text,uuid,text,
 
 -- initial computation for existing catalog
 select private.reprice_products(null, null, null, 'initial');
+
+-- Confidentiality: shoppers must not read the supplier's original price, the markup or
+-- the applied rule. Expose public catalogue columns only; suppliers and operators read
+-- the full pricing through their own secured RPCs (supplier_products, admin_pricing_overview).
+revoke select on public.products from anon, authenticated;
+grant select (id, name, description, category, price_halalas, display_price_halalas, vat_rate_bp, stock, unit, cities, active, featured,
+  supplier_id, created_at, archived, inventory_version) on public.products to anon, authenticated;

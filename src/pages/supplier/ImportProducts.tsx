@@ -32,6 +32,8 @@ export default function ImportProducts() {
   const [supplierCities, setSupplierCities] = useState<string[]>(['makkah', 'madinah'])
   const [rows, setRows] = useState<any[]>([])
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
+  const [rateBp, setRateBp] = useState(500)
+  useEffect(() => { supabase.rpc('finance_public_settings').then(({ data }) => { if (data?.commission_rate_bp != null) setRateBp(data.commission_rate_bp) }) }, [])
   useEffect(() => { (async () => {
     const { data } = await supabase.rpc('my_supplier_accounts')
     const s = Array.isArray(data) && data[0] ? data[0] : null
@@ -71,7 +73,7 @@ export default function ImportProducts() {
       <h2 style={{ color: 'var(--green)' }}>استيراد المنتجات (Excel / CSV)</h2>
       <div className="card">
         <p className="muted">ارفع ملف Excel (.xlsx) أو CSV يحتوي الأعمدة: <strong>الاسم، الوصف، الفئة، الوحدة، السعر، المخزون، المدن</strong>. أو أدخل المنتجات يدوياً من <Link to="/supplier/products/new" style={{ color: 'var(--green)' }}>هنا</Link>.</p>
-        <p className="muted" style={{ fontSize: 13 }}>السعر الذي تُدخله هو <strong>صافي سعرك</strong>؛ تُضاف رسوم المنصة 35% تلقائياً إلى سعر العرض للعميل.</p>
+        <p className="muted" style={{ fontSize: 13 }}>السعر الذي تُدخله هو <strong>سعرك الأصلي بالريال</strong>؛ تحدد رواء سعر العرض النهائي وفق قواعد التسعير، والعمولة الأساسية {rateBp / 100}% من سعرك الأصلي.</p>
         <input type="file" accept=".xlsx,.xls,.csv" onChange={e => e.target.files?.[0] && onFile(e.target.files[0])} />
         {msg && <div className="note" style={{ margin: '12px 0' }}>{msg}</div>}
         {rows.length > 0 && (
@@ -80,7 +82,7 @@ export default function ImportProducts() {
             <div style={{ maxHeight: 260, overflow: 'auto' }}>
               {rows.slice(0, 50).map((r, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 14 }}>
-                  <span>{r.name} · {r.category} · {r.unit}</span><span className="muted">صافي {(r.price_halalas / 100).toFixed(2)} ← للعميل {(Math.round(r.price_halalas * 1.35) / 100).toFixed(2)} ر.س · مخزون {r.stock}</span>
+                  <span>{r.name} · {r.category} · {r.unit}</span><span className="muted">سعرك {(r.price_halalas / 100).toFixed(2)} ر.س · عمولة أساسية {(Math.round(r.price_halalas * rateBp / 10000) / 100).toFixed(2)} · مخزون {r.stock}</span>
                 </div>
               ))}
             </div>

@@ -521,3 +521,9 @@ returns void language sql security definer set search_path='' as $$
   select private.record_gateway_payment(p_order_id,p_reference,p_gateway) $$;
 revoke all on function public.record_gateway_payment(uuid,text,text) from public, anon, authenticated;
 grant execute on function public.record_gateway_payment(uuid,text,text) to service_role;
+
+-- Confidentiality: customers see their line prices and VAT, not the supplier's original
+-- price, the markup or Rawaa's commission (available to suppliers/operators via RPCs).
+revoke select on public.order_items from anon, authenticated;
+grant select (id, order_id, product_id, product_name, unit_price_halalas, quantity, line_net_halalas, vat_rate_bp, line_vat_halalas, supplier_id)
+  on public.order_items to authenticated;

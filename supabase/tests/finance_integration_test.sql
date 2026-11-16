@@ -695,6 +695,23 @@ begin
   end;
 end $$;
 
+
+-- ================================================================ 16. pricing confidentiality
+do $$
+declare p uuid := test.get('p1')::uuid; o uuid := test.get('o1')::uuid;
+begin
+  perform test.as_anon();
+  begin perform supplier_price_halalas from public.products where id=p; perform test.ok('16 confidentiality', 'shoppers cannot read supplier original price/markup', false);
+  exception when others then perform test.ok('16 confidentiality', 'shoppers cannot read supplier original price/markup', sqlerrm ilike '%permission denied%', sqlerrm); end;
+  perform test.ok('16 confidentiality', 'shoppers can still read the public catalogue price', (select display_price_halalas from public.products where id=p) > 0);
+  perform test.reset();
+  perform test.as_user('00000000-0000-0000-0000-0000000000c1');
+  begin perform base_commission_halalas from public.order_items where order_id=o; perform test.ok('16 confidentiality', 'customers cannot read Rawaa commission on their lines', false);
+  exception when others then perform test.ok('16 confidentiality', 'customers cannot read Rawaa commission on their lines', sqlerrm ilike '%permission denied%', sqlerrm); end;
+  perform test.ok('16 confidentiality', 'customers still read their own line prices', (select count(*) from public.order_items where order_id=o) = 1);
+  perform test.reset();
+end $$;
+
 -- ---------------------------------------------------------------- report
 select test.reset();
 \echo

@@ -36,6 +36,11 @@ import About from './pages/About'
 import PaymentCallback from './pages/PaymentCallback'
 import { LanguageProvider } from './lib/i18n'
 import { initGA } from './lib/analytics'
+// Finance pages are loaded on demand to keep the storefront bundle light.
+const SupplierPayments = React.lazy(() => import('./pages/supplier/SupplierPayments'))
+const SupplierFinance = React.lazy(() => import('./pages/supplier/SupplierFinance'))
+const InvoiceDocument = React.lazy(() => import('./pages/InvoiceDocument'))
+const lazyEl = (el: React.ReactNode) => <React.Suspense fallback={<p className="muted" style={{ padding: 24 }}>جارٍ التحميل…</p>}>{el}</React.Suspense>
 
 initGA()
 
@@ -64,6 +69,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/customer/orders/:id" element={<OrderDetail />} />
             <Route path="/loyalty" element={<Loyalty />} />
             <Route path="/supplier/contract" element={<SupplierContract />} />
+            <Route path="/supplier/payments" element={lazyEl(<SupplierPayments />)} />
+            <Route path="/supplier/finance" element={lazyEl(<SupplierFinance />)} />
+            <Route path="/invoice/:id" element={lazyEl(<InvoiceDocument />)} />
             <Route path="/supplier/products/new" element={<ProductForm />} />
             <Route path="/supplier/shipping" element={<Shipping />} />
             <Route path="/gifts" element={<Gifts />} />
