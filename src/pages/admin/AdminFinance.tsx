@@ -8,6 +8,8 @@ import { Badge, BLOCKERS, ENTITY_TYPES, INVOICE_STATUS, MISSING, PROFILE_STATUS,
 // operator-only SECURITY DEFINER RPC that writes the audit log server-side.
 
 const SECTIONS = {
+  sales: 'تتبع المبيعات',
+  inventory: 'الجرد',
   pricing: 'إدارة الأسعار والعمولات',
   gateways: 'وسائل دفع الموردين',
   contracts: 'العقود والإصدارات',
@@ -47,7 +49,7 @@ const Card = ({ title, children, right }: { title: string; children: ReactNode; 
 const fmtDate = (v?: string | null) => (v ? String(v).slice(0, 10) : '—')
 
 export default function AdminFinance() {
-  const [sec, setSec] = useState<Section>('pricing')
+  const [sec, setSec] = useState<Section>('sales')
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const run = async (fn: () => Promise<unknown>, ok?: string) => {
     setMsg(null)
@@ -62,6 +64,8 @@ export default function AdminFinance() {
         ))}
       </div>
       {msg && <div className="note" style={{ marginBottom: 10, borderColor: msg.ok ? 'var(--green)' : '#b00020' }}>{msg.text}</div>}
+      {sec === 'sales' && <Sales />}
+      {sec === 'inventory' && <Inventory />}
       {sec === 'pricing' && <Pricing {...P} />}
       {sec === 'gateways' && <Gateways {...P} />}
       {sec === 'contracts' && <Contracts {...P} />}
@@ -303,6 +307,7 @@ function Invoices({ run }: Props) {
     setCn({ ...cn, [id]: { amount: '', reason: '' } }); await load()
   }, 'تم إصدار إشعار دائن مرتبط بالفاتورة (الفاتورة الأصلية محفوظة دون حذف)')
   return <>
+    <Uninvoiced run={run} onDone={load} />
     <Card title="إقفال فترة شهرية">
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <input type="month" value={closeM} onChange={e => setCloseM(e.target.value)} style={{ maxWidth: 180 }} />
@@ -568,4 +573,172 @@ function Settings({ run }: Props) {
     </Card>
     <button className="btn" onClick={save}>حفظ الإعدادات</button>
   </>
+}
+
+// ------------------------------------------------------------------ shared helpers for the new tools
+const ksaToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' })
+const daysAgo = (n: number) => { const d = new Date(ksaToday()); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) }
+const ORDER_STATUS: Record<string, string> = { pending: 'جديد', confirmed: 'مؤكد', preparing: 'قيد التجهيز', out_for_delivery: 'خرج للتوصيل', delivered: 'مكتمل', cancelled: 'ملغى' }
+const PAY_METHOD: Record<string, string> = { supplier_link: 'رابط المورد', cod: 'عند الاستلام' }
+function downloadCsv(name: string, head: string[], rows: (string | number)[][]) {
+  const esc = (v: string | number) => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t }
+  const csv = '﻿' + [head, ...rows].map(r => r.map(esc).join(',')).join('\n')
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = name; a.click()
+}
+const Kpi = ({ label, value, warn }: { label: string; value: string; warn?: boolean }) => (
+  <div className="card" style={{ flex: '1 1 150px', textAlign: 'center', padding: 12 }}>
+    <div style={{ fontSize: 20, fontWeight: 700, color: warn ? '#b00020' : 'var(--green)' }}>{value}</div>
+    <div className="muted" style={{ fontSize: 12 }}>{label}</div>
+  </div>
+)
+
+// ------------------------------------------------------------------ sales tracking
+function Sales() {
+  const [from, setFrom] = useState(daysAgo(29))
+  const [to, setTo] = useState(ksaToday())
+  const [supplier, setSupplier] = useState('')
+  const [suppliers, setSuppliers] = useState<[string, string][]>([])
+  const [rep, setRep] = useState<any>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const load = async () => {
+    setErr(null)
+    try { setRep(await rpc('admin_sales_report', { p_from: from, p_to: to, p_supplier: supplier || null })) } catch (e: any) { setErr(e.message) }
+  }
+  useEffect(() => { load(); rpc('admin_payment_profiles').then((r: any[]) => setSuppliers((r ?? []).map(x => [x.supplier_id, x.supplier_name]))).catch(() => {}) }, [])
+  const t = rep?.totals ?? {}, c = rep?.commission ?? {}
+  const maxDay = Math.max(1, ...((rep?.by_day ?? []).map((d: any) => Number(d.gross_halalas))))
+  return <>
+    <Card title="الفترة والمورد" right={rep && <button className="btn ghost" onClick={() => downloadCsv(`rawaa-sales-${from}-${to}.csv`,
+      ['order', 'date', 'supplier', 'city', 'status', 'payment', 'method', 'amount_sar', 'refunded_sar'],
+      rep.orders.map((o: any) => [o.id, String(o.created_at).slice(0, 10), o.supplier ?? '', o.city ?? '', o.status, o.payment_status, o.payment_method ?? '', riyal(o.payable_halalas), riyal(o.refunded_halalas)]))}>تصدير الطلبات CSV</button>}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input type="date" value={from} onChange={e => setFrom(e.target.value)} /><input type="date" value={to} onChange={e => setTo(e.target.value)} />
+        <select value={supplier} onChange={e => setSupplier(e.target.value)}><option value="">كل الموردين</option>{suppliers.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>
+        <button className="btn" onClick={load}>عرض</button>
+        {[['7 أيام', 6], ['30 يوماً', 29], ['90 يوماً', 89]].map(([l, n]) => <button key={l as string} className="btn ghost" style={{ padding: '4px 10px' }} onClick={() => { setFrom(daysAgo(n as number)); setTo(ksaToday()) }}>{l as string}</button>)}
+      </div>
+      {err && <div className="note">{err}</div>}
+    </Card>
+    {rep && <>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <Kpi label="عدد الطلبات" value={String(t.orders)} />
+        <Kpi label="إجمالي المبيعات (ر.س)" value={riyal(t.gross_halalas)} />
+        <Kpi label="مدفوع ومؤكد من المورد (ر.س)" value={riyal(t.paid_halalas)} />
+        <Kpi label={`بانتظار الدفع (${t.awaiting_payment})`} value={riyal(t.unpaid_halalas)} warn={t.awaiting_payment > 0} />
+        <Kpi label="مكتملة / ملغاة" value={`${t.delivered} / ${t.cancelled}`} />
+        <Kpi label="مسترجع (ر.س)" value={riyal(t.refunded_halalas)} warn={t.refunded_halalas > 0} />
+        <Kpi label="عمولة رواء المتوقعة (ر.س)" value={riyal(c.expected_halalas)} />
+        <Kpi label="عمولة مستحقة فعلياً (ر.س)" value={riyal(c.accrued_halalas)} />
+      </div>
+      <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>طرق الدفع: رابط المورد {t.link_orders} · عند الاستلام {t.cod_orders}. العمولة المتوقعة تشمل الطلبات غير الملغاة، وتصبح مستحقة عند اكتمال الطلب ودفعه. التواريخ بتوقيت الرياض.</p>
+      <Card title="المبيعات اليومية">
+        {rep.by_day.length === 0 ? <p className="muted">لا توجد مبيعات في الفترة.</p> :
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 140, overflowX: 'auto' }}>
+            {rep.by_day.map((d: any) => <div key={d.day} title={`${d.day}: ${riyal(d.gross_halalas)} ر.س · ${d.orders} طلب`} style={{ flex: '1 0 10px', minWidth: 10, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
+              <div style={{ height: `${(Number(d.gross_halalas) / maxDay) * 100}%`, background: 'var(--green)', opacity: 0.35, borderRadius: '3px 3px 0 0', position: 'relative' }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${Number(d.gross_halalas) ? (Number(d.paid_halalas) / Number(d.gross_halalas)) * 100 : 0}%`, background: 'var(--green)', opacity: 1 }} /></div>
+            </div>)}
+          </div>}
+        <p className="muted" style={{ fontSize: 11, margin: '6px 0 0' }}>العمود الفاتح: إجمالي المبيعات · الجزء الداكن: المدفوع. مرّر المؤشر لرؤية القيم.</p>
+      </Card>
+      <Card title="حسب المورد" right={<button className="btn ghost" onClick={() => downloadCsv(`rawaa-sales-by-supplier-${from}-${to}.csv`,
+        ['supplier', 'orders', 'paid_orders', 'gross_sar', 'paid_sar', 'unpaid_sar', 'refunded_sar', 'commission_sar'],
+        rep.by_supplier.map((x: any) => [x.supplier ?? '', x.orders, x.paid_orders, riyal(x.gross_halalas), riyal(x.paid_halalas), riyal(x.unpaid_halalas), riyal(x.refunded_halalas), riyal(x.commission_halalas)]))}>CSV</button>}>
+        <Table head={['المورد', 'الطلبات', 'المدفوعة', 'المبيعات', 'المدفوع', 'بانتظار الدفع', 'مسترجع', 'عمولة رواء']}>
+          {rep.by_supplier.map((x: any) => <tr key={x.supplier_id}><td style={td}>{x.supplier}</td><td style={td}>{x.orders}</td><td style={td}>{x.paid_orders}</td>
+            <td style={td}>{riyal(x.gross_halalas)}</td><td style={td}>{riyal(x.paid_halalas)}</td><td style={{ ...td, color: x.unpaid_halalas > 0 ? '#b00020' : undefined }}>{riyal(x.unpaid_halalas)}</td>
+            <td style={td}>{riyal(x.refunded_halalas)}</td><td style={td}><strong>{riyal(x.commission_halalas)}</strong></td></tr>)}
+        </Table>
+      </Card>
+      <Card title="الأكثر مبيعاً">
+        <Table head={['المنتج', 'المورد', 'الكمية', 'المبيعات (قبل الضريبة)', 'عمولة رواء']}>
+          {rep.by_product.map((x: any) => <tr key={x.product_id}><td style={td}>{x.product}</td><td style={td}>{x.supplier ?? '—'}</td><td style={td}>{x.qty}</td>
+            <td style={td}>{riyal(x.sales_halalas)}</td><td style={td}>{riyal(x.commission_halalas)}</td></tr>)}
+        </Table>
+      </Card>
+      <Card title={`الطلبات (${rep.orders.length}${rep.orders.length >= 500 ? '+' : ''})`}>
+        <Table head={['الطلب', 'التاريخ', 'المورد', 'المدينة', 'الحالة', 'الدفع', 'الطريقة', 'المبلغ']}>
+          {rep.orders.map((o: any) => <tr key={o.id}><td style={td} dir="ltr">{String(o.id).slice(0, 8)}</td><td style={td}>{String(o.created_at).slice(0, 10)}</td>
+            <td style={td}>{o.supplier ?? '—'}</td><td style={td}>{o.city ?? '—'}</td><td style={td}>{ORDER_STATUS[o.status] ?? o.status}</td>
+            <td style={td}>{o.payment_status === 'paid' ? '✓ مدفوع' : 'بانتظار'}</td><td style={td}>{PAY_METHOD[o.payment_method] ?? '—'}</td><td style={td}>{riyal(o.payable_halalas)}</td></tr>)}
+        </Table>
+      </Card>
+    </>}
+  </>
+}
+
+// ------------------------------------------------------------------ inventory count (جرد)
+function Inventory() {
+  const [rows, setRows] = useState<any[]>([])
+  const [low, setLow] = useState(5)
+  const [state, setState] = useState('')
+  const [supplier, setSupplier] = useState('')
+  const [q, setQ] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+  const load = async () => { setErr(null); try { setRows(await rpc('admin_inventory_report', { p_supplier: null, p_low: low }) ?? []) } catch (e: any) { setErr(e.message) } }
+  useEffect(() => { load() }, [low])
+  const suppliers = Array.from(new Map(rows.filter(r => r.supplier_id).map(r => [r.supplier_id, r.supplier])).entries())
+  const view = rows.filter(r => (!state || r.state === state) && (!supplier || r.supplier_id === supplier) && (!q || String(r.product).includes(q)))
+  const sum = (k: string) => view.reduce((a, r) => a + Number(r[k] || 0), 0)
+  const STATE: Record<string, [string, string]> = { ok: ['متوفر', 'var(--green)'], low: ['منخفض', '#8a6d1d'], out: ['نافد', '#b00020'] }
+  return <>
+    <Card title="جرد المخزون" right={<div style={{ display: 'flex', gap: 6 }}>
+      <button className="btn ghost" onClick={() => window.print()}>طباعة</button>
+      <button className="btn ghost" onClick={() => downloadCsv(`rawaa-inventory-${ksaToday()}.csv`,
+        ['product', 'supplier', 'category', 'unit', 'stock', 'reserved', 'sold_30d', 'original_sar', 'price_sar', 'stock_value_original_sar', 'state', 'active'],
+        view.map(r => [r.product, r.supplier ?? '', CATS[r.category] ?? r.category, r.unit ?? '', r.stock, r.reserved_qty, r.sold_30d, riyal(r.original_halalas), riyal(r.price_halalas), riyal(r.stock_value_original_halalas), r.state, r.active ? 'yes' : 'no']))}>تصدير CSV</button></div>}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input placeholder="بحث عن منتج…" value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 200 }} />
+        <select value={supplier} onChange={e => setSupplier(e.target.value)}><option value="">كل الموردين</option>{suppliers.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>
+        <select value={state} onChange={e => setState(e.target.value)}><option value="">كل الحالات</option><option value="out">نافد</option><option value="low">منخفض</option><option value="ok">متوفر</option></select>
+        <label style={{ fontSize: 13 }}>حد المخزون المنخفض <input inputMode="numeric" value={low} onChange={e => setLow(Math.max(0, Number(e.target.value.replace(/\D/g, '')) || 0))} style={{ width: 60 }} /></label>
+        <button className="btn ghost" onClick={load}>تحديث</button>
+      </div>
+      {err && <div className="note">{err}</div>}
+    </Card>
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+      <Kpi label="عدد المنتجات" value={String(view.length)} />
+      <Kpi label="إجمالي الوحدات المتوفرة" value={String(sum('stock'))} />
+      <Kpi label="محجوز لطلبات قائمة" value={String(sum('reserved_qty'))} />
+      <Kpi label="نافد" value={String(view.filter(r => r.state === 'out').length)} warn />
+      <Kpi label="منخفض" value={String(view.filter(r => r.state === 'low').length)} warn />
+      <Kpi label="قيمة المخزون بسعر المورد (ر.س)" value={riyal(sum('stock_value_original_halalas'))} />
+      <Kpi label="قيمة المخزون بسعر البيع (ر.س)" value={riyal(sum('stock_value_sale_halalas'))} />
+    </div>
+    <Card title="المنتجات">
+      <Table head={['المنتج', 'المورد', 'التصنيف', 'المخزون', 'محجوز', 'مبيع 30 يوماً', 'سعر المورد', 'سعر البيع', 'قيمة المخزون', 'الحالة']}>
+        {view.map(r => { const [l, col] = STATE[r.state]; return <tr key={r.product_id} style={{ opacity: r.active ? 1 : 0.6 }}>
+          <td style={td}>{r.product}{!r.active && <span className="muted"> (غير معروض)</span>}</td><td style={td}>{r.supplier ?? '—'}</td>
+          <td style={td}>{CATS[r.category] ?? r.category}</td><td style={{ ...td, fontWeight: 700, color: col }}>{r.stock} {r.unit ?? ''}</td>
+          <td style={td}>{r.reserved_qty}</td><td style={td}>{r.sold_30d}</td><td style={td}>{riyal(r.original_halalas)}</td><td style={td}>{riyal(r.price_halalas)}</td>
+          <td style={td}>{riyal(r.stock_value_original_halalas)}</td><td style={td}><span className="badge" style={{ background: col, color: '#fff' }}>{l}</span></td></tr> })}
+      </Table>
+      <p className="muted" style={{ fontSize: 12 }}>يحدّث المورد الكميات من لوحته؛ الأرقام هنا لحظية. «محجوز» = كميات في طلبات لم تكتمل بعد.</p>
+    </Card>
+  </>
+}
+
+// ------------------------------------------------------------------ commissions not yet invoiced + per-supplier invoicing
+function Uninvoiced({ run, onDone }: Props & { onDone: () => void }) {
+  const [rows, setRows] = useState<any[]>([])
+  const load = () => run(async () => setRows(await rpc('admin_uninvoiced_commissions') ?? []))
+  useEffect(() => { load() }, [])
+  const issue = (x: any, doIssue: boolean) => {
+    if (doIssue && !confirm(`إصدار فاتورة عمولة لـ ${x.supplier} عن ${String(x.period_month).slice(0, 7)} بقيمة ${riyal(x.commission_halalas)} ر.س؟ لا يمكن تعديل الفاتورة بعد إصدارها.`)) return
+    run(async () => { const r: any = await rpc('admin_close_supplier_period', { p_supplier: x.supplier_id, p_month: x.period_month, p_issue: doIssue }); await load(); onDone(); return r },
+      doIssue ? 'تم إصدار الفاتورة وإشعار المورد' : 'تم إنشاء مسودة الفاتورة')
+  }
+  const total = rows.reduce((a, x) => a + Number(x.commission_halalas || 0), 0)
+  return <Card title={`عمولات لم تُفوتر بعد (${riyal(total)} ر.س)`}>
+    {rows.length === 0 ? <p className="muted">لا توجد عمولات مستحقة غير مفوترة.</p> :
+      <Table head={['المورد', 'الشهر', 'الطلبات', 'المبيعات الأصلية', 'العمولة', '']}>
+        {rows.map(x => <tr key={x.supplier_id + x.period_month}><td style={td}>{x.supplier}</td><td style={td}>{String(x.period_month).slice(0, 7)}</td>
+          <td style={td}>{x.orders}</td><td style={td}>{riyal(x.original_halalas)}</td><td style={td}><strong>{riyal(x.commission_halalas)}</strong></td>
+          <td style={td}>{x.closable
+            ? <div style={{ display: 'flex', gap: 4 }}><button className="btn ghost" style={{ padding: '2px 8px' }} onClick={() => issue(x, false)}>مسودة</button>
+                <button className="btn" style={{ padding: '2px 8px' }} onClick={() => issue(x, true)}>إصدار الفاتورة</button></div>
+            : <span className="muted" style={{ fontSize: 12 }}>الشهر لم ينتهِ بعد</span>}</td></tr>)}
+      </Table>}
+    <p className="muted" style={{ fontSize: 12 }}>تُحتسب العمولة عند اكتمال الطلب ودفعه. تصدر فاتورة واحدة لكل مورد عن كل شهر بعد انتهائه، ويمكن إصدارها هنا لمورد بعينه أو للجميع من «إقفال فترة شهرية».</p>
+  </Card>
 }

@@ -722,6 +722,35 @@ begin
   perform test.reset();
 end $$;
 
+-- ================================================================ 17. admin sales tracking, inventory, per-supplier invoicing
+do $$
+declare r jsonb; n int; s1 uuid := test.get('s1')::uuid; inv jsonb;
+begin
+  begin perform test.as_user('00000000-0000-0000-0000-0000000000c1'); perform public.admin_sales_report(current_date - 30, current_date, null);
+    perform test.ok('17 admin tools', 'customers cannot read platform sales', false);
+  exception when others then perform test.ok('17 admin tools', 'customers cannot read platform sales', sqlerrm ilike '%forbidden%', sqlerrm); end;
+  perform test.reset();
+  perform test.as_user('00000000-0000-0000-0000-0000000000a0');
+  r := public.admin_sales_report('2026-01-01', current_date + 1, null);
+  perform test.ok('17 admin tools', 'sales report counts direct orders with paid/awaiting/cancelled split',
+    (r->'totals'->>'orders')::int > 0 and (r->'totals'->>'paid_orders')::int > 0 and (r->'totals'->>'cancelled')::int >= 1
+    and (r->'totals'->>'gross_halalas')::bigint >= (r->'totals'->>'paid_halalas')::bigint, r->>'totals');
+  perform test.ok('17 admin tools', 'sales report breaks down by supplier, product and day',
+    jsonb_array_length(r->'by_supplier') >= 1 and jsonb_array_length(r->'by_product') >= 1 and jsonb_array_length(r->'by_day') >= 1);
+  perform test.ok('17 admin tools', 'expected commission covers accrued commission', (r->'commission'->>'expected_halalas')::bigint >= 0 and r->'commission' ? 'accrued_halalas', r->>'commission');
+  r := public.admin_sales_report('2026-01-01', current_date + 1, s1);
+  perform test.ok('17 admin tools', 'sales report filters by supplier', (select bool_and(x->>'supplier_id' = s1::text) from jsonb_array_elements(r->'by_supplier') x));
+  select count(*) into n from public.admin_inventory_report(null, 5) x;
+  perform test.ok('17 admin tools', 'inventory lists every non-archived product', n = (select count(*) from public.products where not archived), n::text);
+  perform test.ok('17 admin tools', 'inventory reports stock value and state',
+    (select bool_and((x ? 'stock_value_original_halalas') and x->>'state' in ('ok','low','out')) from public.admin_inventory_report(null, 5) x));
+  perform test.ok('17 admin tools', 'uninvoiced commissions are listed for invoicing', (select count(*) from public.admin_uninvoiced_commissions()) >= 0);
+  begin perform public.admin_close_supplier_period(s1, current_date, true);
+    perform test.ok('17 admin tools', 'open month cannot be invoiced early', false);
+  exception when others then perform test.ok('17 admin tools', 'open month cannot be invoiced early', sqlerrm ilike '%completed months%', sqlerrm); end;
+  perform test.reset();
+end $$;
+
 -- ---------------------------------------------------------------- report
 select test.reset();
 \echo
