@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Badge, BLOCKERS, ENTITY_TYPES, INVOICE_STATUS, MISSING, PROFILE_STATUS, callFn, pct, riyal, toHalalas } from '../../lib/finance'
+import { Badge, BLOCKERS, ENTITY_TYPES, INVOICE_STATUS, MISSING, PROFILE_STATUS, pct, riyal, toHalalas } from '../../lib/finance'
 
 // Admin finance console: pricing & commissions, payment methods, contracts, commission invoices,
 // transfers, arrears & disputes, reports and finance settings. Every action goes through an
@@ -209,13 +209,13 @@ function Gateways({ run }: Props) {
           <div>البنك: {p.bank_name ?? '—'}{p.iban_bank_detected && p.iban_bank_detected !== p.bank_name ? ` (الآيبان يشير إلى: ${p.iban_bank_detected})` : ''}</div>
           <div>الآيبان: <span dir="ltr">{p.iban ?? '—'}</span> {p.iban ? (p.iban_valid ? '✓' : '✗') : ''}</div>
           <div>الضريبة: {p.vat_registered ? <>مسجل · <span dir="ltr">{p.tax_number}</span> {p.vat_certificate_path && <button className="btn ghost" style={{ padding: '1px 6px', fontSize: 12 }} onClick={() => cert(p.vat_certificate_path)}>الشهادة</button>}</> : 'غير مسجل'}</div>
-          <div>البوابة: {p.gateway_provider ? `Tap · ${p.gateway_mode === 'live' ? 'حي' : 'تجريبي'} · …${p.gateway_key_hint ?? ''} · ${p.gateway_check_status}` : 'غير مرتبطة'}</div>
+          <div>طرق الدفع: {[p.payment_link ? <a key="l" href={p.payment_link} target="_blank" rel="noopener noreferrer" dir="ltr">رابط الدفع</a> : null, p.accepts_cod ? 'الدفع عند الاستلام' : null].filter(Boolean).length ? <>{p.payment_link && <a href={p.payment_link} target="_blank" rel="noopener noreferrer">رابط الدفع ↗</a>}{p.payment_link && p.accepts_cod ? ' · ' : ''}{p.accepts_cod ? 'الدفع عند الاستلام' : ''}</> : 'لم تُحدد'}</div>
           <div>البيع: {x.selling_enabled ? '✓ مفعّل' : 'متوقف'}</div>
         </div>
         {x.missing?.length > 0 && <p style={{ fontSize: 13 }}>ناقص: {x.missing.map((m: string) => MISSING[m] ?? m).join('، ')}</p>}
         {!x.selling_enabled && x.blockers?.length > 0 && <p style={{ fontSize: 13 }}>العوائق: {x.blockers.map((b: string) => BLOCKERS[b] ?? b).join('، ')}</p>}
         {x.pending_change && <div className="note" style={{ fontSize: 13 }}>طلب تعديل بيانات حساسة ({fmtDate(x.pending_change.created_at)}):
-          <code dir="ltr" style={{ display: 'block', fontSize: 11 }}>{JSON.stringify(x.pending_change.proposed)}{x.pending_change.gateway ? ' + gateway' : ''}</code>
+          <code dir="ltr" style={{ display: 'block', fontSize: 11 }}>{JSON.stringify(x.pending_change.proposed)}</code>
           <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
             <button className="btn" style={{ padding: '4px 10px' }} onClick={() => decide(x.pending_change.id, true, x.supplier_id)}>اعتماد التعديل</button>
             <button className="btn ghost" style={{ padding: '4px 10px' }} onClick={() => decide(x.pending_change.id, false, x.supplier_id)}>رفض</button></div></div>}
@@ -454,15 +454,14 @@ function DirectOrders({ run }: Props) {
   const refund = (o: any) => {
     const r = rf[o.id] ?? { amount: '', reason: '' }
     const amt = toHalalas(r.amount)
-    if (!confirm(`استرجاع ${riyal(amt)} ر.س عبر بوابة المورد؟ سيُخصم ما يقابله من العمولة.`)) return
+    if (!confirm(`تسجيل استرجاع ${riyal(amt)} ر.س دفعه المورد للعميل؟ سيُخصم ما يقابله من العمولة.`)) return
     run(async () => {
-      const { ok, data } = await callFn('order-refund', { order_id: o.id, amount_halalas: amt, reason: r.reason.trim() })
-      if (!ok) throw new Error(data?.error ?? 'تعذّر تنفيذ الاسترجاع')
+      await rpc('supplier_record_refund', { p_order: o.id, p_amount_halalas: amt, p_reason: r.reason.trim() })
       setRf({ ...rf, [o.id]: { amount: '', reason: '' } }); await load()
-    }, 'تم إرسال الاسترجاع إلى بوابة المورد وتسجيله')
+    }, 'تم تسجيل الاسترجاع وخصم العمولة المقابلة')
   }
   return <Card title="طلبات محصّلة مباشرة لحساب المورد">
-    <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>تصبح هذه الطلبات «مدفوعة» فقط بعد تأكيد موثّق من بوابة المورد (Webhook)، ولا يمكن تعديل حالة الدفع يدوياً. الاسترجاع يتم عبر بوابة المورد نفسها.</p>
+    <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>يدفع العميل للمورد مباشرة (رابط دفع المورد أو عند الاستلام)، ويؤكد المورد استلام المبلغ. لا يمكن للإدارة تعليم هذه الطلبات مدفوعة يدوياً. الاسترجاع يدفعه المورد للعميل ويُسجَّل هنا أو من لوحة المورد.</p>
     {rows.length === 0 ? <p className="muted">لا توجد طلبات دفع مباشر بعد.</p> :
       <Table head={['الطلب', 'التاريخ', 'المورد', 'المبلغ', 'الدفع', 'الحالة', 'العمولة', 'مسترجع', 'ملاحظات', 'استرجاع']}>
         {rows.map(o => { const r = rf[o.id] ?? { amount: '', reason: '' }; return <tr key={o.id}>
@@ -538,20 +537,12 @@ function Settings({ run }: Props) {
     if (Object.keys(p).length === 0) return
     await rpc('admin_update_finance_settings', { p }); await load()
   }, 'تم حفظ الإعدادات وتسجيلها في سجل التدقيق')
-  const flag = (k: string, v: boolean, warn: string) => { if (confirm(warn)) run(async () => { await rpc('admin_update_finance_settings', { p: { [k]: v } }); await load() }, 'تم التحديث') }
   const num = (k: string, label: string, hint?: string) => <div className="field"><label>{label}</label><input inputMode="numeric" value={f[k] ?? ''} onChange={e => set(k, e.target.value === '' ? null : Number(e.target.value.replace(/\D/g, '')))} />{hint && <p className="muted" style={{ fontSize: 11 }}>{hint}</p>}</div>
   const txt = (k: string, label: string, ltr = false) => <div className="field"><label>{label}</label><input dir={ltr ? 'ltr' : undefined} value={f[k] ?? ''} onChange={e => set(k, e.target.value || null)} /></div>
   const chk = (k: string, label: string) => <label style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}><input type="checkbox" checked={!!f[k]} onChange={e => set(k, e.target.checked)} /> {label}</label>
   return <>
-    <Card title="تشغيل نظام الدفع المباشر للمورد">
-      <p style={{ fontSize: 14, margin: 0 }}>الحالة: <strong>{s.direct_payments_enabled ? 'مفعّل' : 'غير مفعّل (الوضع الحالي للمنصة مستمر)'}</strong></p>
-      <p className="muted" style={{ fontSize: 12 }}>عند التفعيل: لا تظهر للعملاء إلا منتجات الموردين المكتملة بياناتهم والمعتمدة وسيلة دفعهم والقابلين للعقد الساري، ويُحصَّل كل طلب عبر بوابة المورد مباشرة.</p>
-      <button className="btn" onClick={() => flag('direct_payments_enabled', !s.direct_payments_enabled, s.direct_payments_enabled ? 'إيقاف الدفع المباشر وإعادة المنصة للوضع السابق؟' : 'تفعيل الدفع المباشر؟ تأكد من نشر العقد بعد مراجعته قانونياً واعتماد وسائل دفع الموردين.')}>
-        {s.direct_payments_enabled ? 'إيقاف' : 'تفعيل'}</button>
-      <hr />
-      <p style={{ fontSize: 14, margin: 0 }}>اعتماد الحسابات الحية لـ Tap: <strong>{s.tap_live_contract_confirmed ? 'مؤكد' : 'غير مؤكد'}</strong></p>
-      <p className="muted" style={{ fontSize: 12 }}>لا تُعتمد مفاتيح Tap الحية للموردين إلا بعد تأكيد كتابي من Tap بأن التحصيل يتم مباشرة لحساب المورد دون رسوم شهرية غير معتمدة.</p>
-      <button className="btn ghost" onClick={() => flag('tap_live_contract_confirmed', !s.tap_live_contract_confirmed, 'هل حصلت على تأكيد مكتوب من Tap؟')}>{s.tap_live_contract_confirmed ? 'إلغاء التأكيد' : 'تسجيل التأكيد'}</button>
+    <Card title="نظام الدفع">
+      <p style={{ fontSize: 14, margin: 0 }}>يدفع العميل للمورد مباشرة عبر <strong>رابط الدفع الخاص بالمورد</strong> أو <strong>نقداً عند الاستلام</strong>. لا تمر الأموال بحساب رواء، وتُحصَّل عمولة المنصة من المورد عبر الفاتورة الشهرية.</p>
     </Card>
     <Card title="العمولات والضريبة">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>

@@ -86,8 +86,7 @@ create function test.activate_payments(p_sup uuid, p_owner uuid, p_vat boolean) 
     'cr_number','1010123456','account_holder_name','منشأة اختبار','bank_name','مصرف الراجحي','iban','SA0380000000608010167519',
     'vat_registered', p_vat, 'tax_number', case when p_vat then '300000000000003' end,
     'vat_certificate_path', case when p_vat then p_owner::text||'/vat.pdf' end));
-  perform test.as_service();
-  perform public.svc_store_gateway_credentials(p_sup, p_owner, 'tap', 'test', 'k4x9', null, 'valid', 'Y2lwaGVydGV4dC1iYXNlNjQ=', 'aXYtMTIzNDU2');
+  perform public.supplier_set_payment_methods(p_sup, 'https://pay.example.sa/'||left(p_sup::text,8), true, null);
   perform test.as_user('00000000-0000-0000-0000-0000000000a0');
   perform public.admin_review_payment_profile(p_sup, 'approve', null);
   perform test.reset();
@@ -100,10 +99,10 @@ declare v_order uuid; v_total bigint; begin
   perform test.as_user(p_customer);
   v_order := public.place_order(p_items, 'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'عميل اختبار', '0500000000', gen_random_uuid(), '{}'::jsonb, 0);
   perform public.set_order_delivery(v_order, 'oto');
+  perform public.choose_order_payment_method(v_order, 'supplier_link');
   perform test.reset();
-  select payable_halalas into v_total from public.orders where id=v_order;
-  perform test.as_service();
-  perform public.svc_process_charge('tap', p_charge, v_order, 'CAPTURED', v_total, 'SAR', 'test');
+  perform test.as_user((select s.owner_id from public.suppliers s join public.orders o on o.supplier_id=s.id where o.id=v_order));
+  perform public.supplier_confirm_order_payment(v_order, p_charge);
   perform test.reset();
   return v_order;
 end $$;
@@ -150,7 +149,7 @@ begin
   exception when others then perform test.ok('01 no payment method', 'invalid IBAN checksum rejected', sqlerrm ilike '%IBAN%', sqlerrm); end;
 end $$;
 
--- ================================================================ 2. supplier connects a valid gateway
+-- ================================================================ 2. supplier sets its own payment link / cash on delivery
 do $$
 declare s1 uuid := test.get('s1')::uuid; r jsonb; v_status text; v_sec int;
 begin
@@ -159,26 +158,23 @@ begin
     'account_holder_name','مؤسسة المياه الأولى','bank_name','مصرف الراجحي','iban','SA03 8000 0000 6080 1016 7519','vat_registered',true,
     'tax_number','300000000000003','vat_certificate_path','00000000-0000-0000-0000-0000000000b1/vat.pdf'));
   perform test.reset();
-  perform test.ok('02 gateway', 'complete bank data without gateway stays incomplete', r->>'status' = 'incomplete' and (r->'missing') ? 'gateway', r::text);
-  perform test.as_service();
-  r := public.svc_store_gateway_credentials(s1, '00000000-0000-0000-0000-0000000000b1', 'tap', 'live', 'k4x9', 'mrc_1', 'valid', 'Y2lwaGVydGV4dC1iYXNlNjQ=', 'aXYtMTIzNDU2');
-  perform test.reset();
-  perform test.ok('02 gateway', 'verified gateway moves profile to pending review (قيد التحقق)', r->>'status' = 'pending', r::text);
-  select count(*) into v_sec from private.supplier_gateway_secrets where supplier_id=s1 and ciphertext not like 'sk_%';
-  perform test.ok('02 gateway', 'only ciphertext is stored for the gateway key', v_sec = 1);
+  perform test.ok('02 payment method', 'complete bank data without a payment method stays incomplete', r->>'status' = 'incomplete' and (r->'missing') ? 'payment_method', r::text);
   begin
-    perform test.as_user('00000000-0000-0000-0000-0000000000a0');
-    perform public.admin_review_payment_profile(s1, 'approve', null);
-    perform test.ok('02 gateway', 'live Tap key blocked until direct-settlement terms confirmed', false);
-  exception when others then perform test.ok('02 gateway', 'live Tap key blocked until direct-settlement terms confirmed', sqlerrm ilike '%live Tap%', sqlerrm); end;
-  perform test.as_service();
-  perform public.svc_store_gateway_credentials(s1, '00000000-0000-0000-0000-0000000000b1', 'tap', 'test', 'k4x9', null, 'valid', 'Y2lwaGVydGV4dC1iYXNlNjQ=', 'aXYtMTIzNDU2');
+    perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+    perform public.supplier_set_payment_methods(s1, 'http://insecure.example/pay', false, null);
+    perform test.ok('02 payment method', 'non-https payment link rejected', false);
+  exception when others then perform test.ok('02 payment method', 'non-https payment link rejected', sqlerrm ilike '%https%', sqlerrm); end;
+  perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+  r := public.supplier_set_payment_methods(s1, 'https://pay.example.sa/water1', true, 'ادفع عبر الرابط أو نقداً عند الاستلام');
+  perform test.reset();
+  perform test.ok('02 payment method', 'payment link + COD moves profile to pending review (قيد التحقق)', r->>'status' = 'pending', r::text);
+  perform test.ok('02 payment method', 'no Tap key is required or stored', not exists(select 1 from private.supplier_gateway_secrets where supplier_id=s1));
   perform test.as_user('00000000-0000-0000-0000-0000000000a0');
   perform public.admin_review_payment_profile(s1, 'approve', 'تم التحقق');
   perform test.reset();
   select status into v_status from public.supplier_payment_profiles where supplier_id=s1;
-  perform test.ok('02 gateway', 'admin approval activates payment method (مفعل)', v_status = 'active', v_status);
-  perform test.ok('02 gateway', 'supplier can sell after payment + contract + approval', (select selling_enabled from public.suppliers where id=s1),
+  perform test.ok('02 payment method', 'admin approval activates payment method (مفعل)', v_status = 'active', v_status);
+  perform test.ok('02 payment method', 'supplier can sell after payment + contract + approval', (select selling_enabled from public.suppliers where id=s1),
     (select array_to_string(selling_blockers,',') from public.suppliers where id=s1));
   -- sensitive change on an active profile is queued for re-verification, selling continues
   perform test.as_user('00000000-0000-0000-0000-0000000000b1');
@@ -186,13 +182,13 @@ begin
     'account_holder_name','مؤسسة المياه الأولى','bank_name','البنك الأهلي السعودي','iban','SA1810000001234567891234','vat_registered',true,
     'tax_number','300000000000003','vat_certificate_path','00000000-0000-0000-0000-0000000000b1/vat.pdf'));
   perform test.reset();
-  perform test.ok('02 gateway', 'IBAN change on active account needs admin approval', r ? 'change_request'
+  perform test.ok('02 payment method', 'IBAN change on active account needs admin approval', r ? 'change_request'
     and (select iban from public.supplier_payment_profiles where supplier_id=s1) = 'SA0380000000608010167519'
     and (select selling_enabled from public.suppliers where id=s1), r::text);
   perform test.as_user('00000000-0000-0000-0000-0000000000a0');
   perform public.admin_decide_payment_change((r->>'change_request')::uuid, false, 'لم يُرفق خطاب البنك');
   perform test.reset();
-  perform test.ok('02 gateway', 'rejected change leaves verified details untouched',
+  perform test.ok('02 payment method', 'rejected change leaves verified details untouched',
     (select iban from public.supplier_payment_profiles where supplier_id=s1) = 'SA0380000000608010167519');
 end $$;
 
@@ -360,10 +356,10 @@ begin
     update public.orders set status = 'delivered' where id = v_order;
     perform test.ok('07 accrual', 'completion requires documented receipt', false);
   exception when others then perform test.ok('07 accrual', 'completion requires documented receipt', sqlerrm ilike '%documented receipt%', sqlerrm); end;
-  perform test.as_service();
-  r := public.svc_process_charge('tap', 'chg_TEST000001', v_order, 'CAPTURED', (select payable_halalas from public.orders where id=v_order), 'SAR', 'test');
+  perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+  r := public.supplier_confirm_order_payment(v_order, 'chg_TEST000001')->>'status';
   perform test.reset();
-  perform test.ok('07 accrual', 'repeated webhook for the same capture is ignored', r = 'duplicate_event_ignored', r);
+  perform test.ok('07 accrual', 'repeated payment confirmation is ignored', r = 'already_paid', r);
   perform test.complete_order(v_order, '2026-10-15 10:00+03');
   perform test.complete_order(test.get('o2')::uuid, '2026-10-20 10:00+03');
   perform test.complete_order(test.get('o3')::uuid, '2026-10-21 10:00+03');
@@ -387,23 +383,32 @@ begin
   perform test.reset();
   select stock into v_after from public.products where id=p;
   perform test.ok('08 cancel/refund', 'cancelling an unpaid order restores stock', v_after = v_stock, format('%s -> %s', v_stock, v_after));
-  perform test.as_service();
-  r := public.svc_process_charge('tap', 'chg_TEST_LATE01', v_order, 'CAPTURED', (select payable_halalas from public.orders where id=v_order), 'SAR', 'test');
+  begin
+    perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+    perform public.supplier_confirm_order_payment(v_order, 'TRX-LATE');
+    perform test.ok('08 cancel/refund', 'supplier cannot confirm payment on a cancelled order', false);
+  exception when others then perform test.ok('08 cancel/refund', 'supplier cannot confirm payment on a cancelled order', sqlerrm ilike '%cancelled%', sqlerrm); end;
   perform test.reset();
-  perform test.ok('08 cancel/refund', 'capture after cancellation is flagged for refund, not marked paid',
-    r = 'paid_after_cancel_flagged' and (select payment_status from public.orders where id=v_order) = 'unpaid', r);
-  perform test.as_service();
-  r := public.svc_process_charge('tap', 'chg_TEST_DUP001', test.get('o1')::uuid, 'CAPTURED', 12650, 'SAR', 'test');
+  perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+  r := public.supplier_confirm_order_payment(test.get('o1')::uuid, 'TRX-DUP')->>'status';
   perform test.reset();
-  perform test.ok('08 cancel/refund', 'second capture on a paid order is flagged as duplicate payment',
-    r = 'duplicate_payment_flagged' and exists(select 1 from private.finance_alerts where kind='duplicate_payment'), r);
+  perform test.ok('08 cancel/refund', 'confirming an already-paid order is a no-op (no double payment)',
+    r = 'already_paid' and (select count(*) from private.order_payments where order_id=test.get('o1')::uuid) = 1, r);
   perform test.as_user('00000000-0000-0000-0000-0000000000c1');
   v_order := public.place_order(jsonb_build_array(jsonb_build_object('product_id',p,'quantity',1)), 'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'عميل', '0500000000', gen_random_uuid(), '{}'::jsonb, 0);
-  perform test.as_service();
-  r := public.svc_process_charge('tap', 'chg_TEST_LOW001', v_order, 'CAPTURED', 100, 'SAR', 'test');
   perform test.reset();
-  perform test.ok('08 cancel/refund', 'amount mismatch never marks the order paid',
-    r = 'amount_mismatch_flagged' and (select payment_status from public.orders where id=v_order) = 'unpaid', r);
+  begin
+    perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+    perform public.supplier_confirm_order_payment(v_order, 'TRX-EARLY');
+    perform test.ok('08 cancel/refund', 'payment cannot be confirmed before the customer chooses a method', false);
+  exception when others then perform test.ok('08 cancel/refund', 'payment cannot be confirmed before the customer chooses a method', sqlerrm ilike '%payment method%', sqlerrm); end;
+  perform test.reset();
+  begin
+    perform test.as_user('00000000-0000-0000-0000-0000000000c2');
+    perform public.supplier_confirm_order_payment(v_order, 'TRX-FAKE');
+    perform test.ok('08 cancel/refund', 'a customer cannot mark an order paid', false);
+  exception when others then perform test.ok('08 cancel/refund', 'a customer cannot mark an order paid', sqlerrm ilike '%forbidden%', sqlerrm); end;
+  perform test.reset();
 end $$;
 
 -- ================================================================ 9. month-end invoice
@@ -665,36 +670,41 @@ exception when others then
 end $$;
 
 
--- ================================================================ 15. legacy mode unchanged when the flag is off
+-- ================================================================ 15. Tap removed: customer pays supplier by link or cash on delivery
 do $$
-declare p1 uuid := test.get('p1')::uuid; p2 uuid := test.get('p2')::uuid; v_order uuid; o public.orders; v_seen int;
+declare p uuid := test.get('p1')::uuid; v_order uuid; r jsonb; v_seen boolean;
 begin
-  perform test.as_user('00000000-0000-0000-0000-0000000000a0');
-  perform public.admin_set_orders_suspended(test.get('s2')::uuid, false, null);
-  perform public.admin_update_finance_settings('{"direct_payments_enabled":false}');
+  perform test.ok('15 no Tap', 'supplier-direct is the only payment mode', private.direct_payments_enabled());
+  perform test.as_user('00000000-0000-0000-0000-0000000000c1');
+  v_order := public.place_order(jsonb_build_array(jsonb_build_object('product_id',p,'quantity',1)), 'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'عميل', '0500000000', gen_random_uuid(), '{}'::jsonb, 0);
+  r := public.order_payment_options(v_order);
   perform test.reset();
-  perform test.as_anon();
-  select count(*) into v_seen from public.products where id in (p1, p2);
-  perform test.reset();
-  perform test.ok('15 legacy', 'with the flag off, approved suppliers'' products stay visible', v_seen = 2, v_seen::text);
-  perform test.as_user('00000000-0000-0000-0000-0000000000c2');
-  v_order := public.place_order(jsonb_build_array(jsonb_build_object('product_id',p1,'quantity',1), jsonb_build_object('product_id',p2,'quantity',1)),
-    'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'عميل', '0500000000', gen_random_uuid(), '{}'::jsonb, 0);
-  perform test.reset();
-  select * into o from public.orders where id=v_order;
-  perform test.ok('15 legacy', 'legacy multi-supplier basket still accepted', o.payment_mode = 'platform_legacy' and o.supplier_id is null);
-  perform test.ok('15 legacy', 'legacy order lines still carry the commission snapshot',
-    (select count(*) from public.order_items where order_id=v_order and commission_rate_bp is not null) = 2);
+  perform test.ok('15 no Tap', 'customer sees the supplier payment link and COD option', r->>'payment_link' like 'https://%' and (r->>'accepts_cod')::boolean, r::text);
   begin
-    perform test.as_service();
-    perform public.record_gateway_payment(v_order, 'chg_LEGACY001', 'tap');
-    perform test.reset();
-    perform test.ok('15 legacy', 'legacy Tap webhook path (record_gateway_payment) records payment', (select payment_status from public.orders where id=v_order) = 'paid');
-  exception when others then
-    perform test.ok('15 legacy', 'legacy Tap webhook path (record_gateway_payment) records payment', false, sqlerrm);
-  end;
+    perform test.as_user('00000000-0000-0000-0000-0000000000c2');
+    perform public.order_payment_options(v_order);
+    perform test.ok('15 no Tap', 'another customer cannot see this order''s payment details', false);
+  exception when others then perform test.ok('15 no Tap', 'another customer cannot see this order''s payment details', sqlerrm ilike '%forbidden%', sqlerrm); end;
+  perform test.reset();
+  perform test.as_user('00000000-0000-0000-0000-0000000000c1');
+  perform public.choose_order_payment_method(v_order, 'cod');
+  perform test.reset();
+  perform test.ok('15 no Tap', 'supplier is notified of the new order awaiting payment',
+    exists(select 1 from public.supplier_notifications where ref_id=v_order::text and kind='new_order'));
+  perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+  r := public.supplier_confirm_order_payment(v_order, null);
+  perform test.reset();
+  perform test.ok('15 no Tap', 'supplier confirms cash collected -> order paid for the exact payable amount',
+    r->>'status' = 'paid' and exists(select 1 from private.order_payments op join public.orders o on o.id=op.order_id
+      where op.order_id=v_order and op.amount_halalas=o.payable_halalas and op.gateway='cod'), r::text);
+  perform test.as_service();
+  begin
+    perform public.svc_process_charge('tap', 'chg_X', v_order, 'CAPTURED', 1, 'SAR', 'test');
+    v_seen := true;
+  exception when others then v_seen := false; end;
+  perform test.reset();
+  perform test.ok('15 no Tap', 'Tap charge entry point is retired', not v_seen);
 end $$;
-
 
 -- ================================================================ 16. pricing confidentiality
 do $$

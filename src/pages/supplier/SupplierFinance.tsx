@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Badge, INVOICE_STATUS, pct, riyal, toHalalas } from '../../lib/finance'
 
-const TABS = [['summary', 'الملخص'], ['invoices', 'الفواتير'], ['payments', 'المدفوعات والإشعارات الدائنة'], ['lines', 'تفاصيل العمولات'], ['notices', 'الإشعارات'], ['contract', 'العقد الموقّع']] as const
+const TABS = [['summary', 'الملخص'], ['orders', 'تأكيد دفع الطلبات'], ['invoices', 'الفواتير'], ['payments', 'المدفوعات والإشعارات الدائنة'], ['lines', 'تفاصيل العمولات'], ['notices', 'الإشعارات'], ['contract', 'العقد الموقّع']] as const
 
 export default function SupplierFinance() {
   const [sup, setSup] = useState<{ id: string; name: string } | null>(null)
@@ -72,6 +72,7 @@ export default function SupplierFinance() {
         </div>
       </div>}
 
+      {tab === 'orders' && sup && <DirectOrders supplierId={sup.id} />}
       {tab === 'invoices' && <div>
         {invoices.length === 0 && <p className="muted">لا توجد فواتير صادرة بعد.</p>}
         {invoices.map(inv => <InvoiceCard key={inv.id} inv={inv} onDone={() => sup && load(sup.id)} />)}
@@ -165,4 +166,54 @@ function InvoiceCard({ inv, onDone }: { inv: any; onDone: () => void }) {
       </div>}
     </div>
   )
+}
+
+// Customers pay the supplier directly (its payment link or cash on delivery); the supplier
+// confirms receipt here so the order can proceed. Refunds are paid by the supplier and recorded
+// here so Rawaa's commission is reversed.
+function DirectOrders({ supplierId }: { supplierId: string }) {
+  const [rows, setRows] = useState<any[]>([])
+  const [ref, setRef] = useState<Record<string, string>>({})
+  const [rf, setRf] = useState<Record<string, { amount: string; reason: string }>>({})
+  const [msg, setMsg] = useState<string | null>(null)
+  const load = async () => {
+    const { data, error } = await supabase.rpc('supplier_direct_orders', { p_supplier: supplierId })
+    if (error) setMsg(error.message); else setRows(data ?? [])
+  }
+  useEffect(() => { load() }, [supplierId])
+  const confirm = async (o: any) => {
+    setMsg(null)
+    const { error } = await supabase.rpc('supplier_confirm_order_payment', { p_order: o.id, p_reference: ref[o.id] || null })
+    if (error) setMsg('تعذّر التأكيد: ' + error.message); else { setMsg('تم تأكيد استلام المبلغ.'); load() }
+  }
+  const refund = async (o: any) => {
+    const r = rf[o.id]; setMsg(null)
+    const { error } = await supabase.rpc('supplier_record_refund', { p_order: o.id, p_amount_halalas: toHalalas(r.amount), p_reason: r.reason })
+    if (error) setMsg('تعذّر تسجيل الاسترجاع: ' + error.message); else { setMsg('تم تسجيل الاسترجاع وخصم العمولة المقابلة.'); load() }
+  }
+  const METHOD: Record<string, string> = { supplier_link: 'رابط الدفع', cod: 'عند الاستلام' }
+  return <div className="card">
+    <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>يدفع العميل لك مباشرة. بعد استلام المبلغ كاملاً أكّد الدفع ليبدأ تجهيز الطلب. لا تؤكّد قبل وصول المبلغ فعلياً.</p>
+    {msg && <div className="note" style={{ marginBottom: 8 }}>{msg}</div>}
+    {rows.length === 0 && <p className="muted">لا توجد طلبات بعد.</p>}
+    {rows.map(o => { const r = rf[o.id] ?? { amount: '', reason: '' }; return (
+      <div key={o.id} style={{ borderBottom: '1px solid var(--line)', padding: '10px 0', fontSize: 13 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <span><strong dir="ltr">{String(o.id).slice(0, 8)}</strong> · {o.recipient_name} · {String(o.created_at).slice(0, 10)}</span>
+          <strong>{riyal(o.payable_halalas)} ر.س</strong>
+        </div>
+        <div className="muted">طريقة الدفع: {METHOD[o.payment_method] ?? 'لم يختر العميل بعد'} · الدفع: {o.payment_status === 'paid' ? '✓ مؤكد' : 'بانتظار التأكيد'} · الحالة: {o.status}
+          {o.refunded_halalas > 0 && <> · مسترجع {riyal(o.refunded_halalas)}</>}</div>
+        {o.payment_status !== 'paid' && o.status !== 'cancelled' && o.payment_method && <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+          {o.payment_method === 'supplier_link' && <input placeholder="رقم العملية / المرجع" value={ref[o.id] ?? ''} onChange={e => setRef({ ...ref, [o.id]: e.target.value })} style={{ maxWidth: 200 }} />}
+          <button className="btn" style={{ padding: '4px 12px' }} disabled={o.payment_method === 'supplier_link' && (ref[o.id] ?? '').trim().length < 3} onClick={() => confirm(o)}>
+            {o.payment_method === 'cod' ? 'تأكيد استلام المبلغ نقداً' : 'تأكيد استلام المبلغ'}</button>
+        </div>}
+        {o.payment_status === 'paid' && (o.refunded_halalas ?? 0) < o.payable_halalas && <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+          <input placeholder="مبلغ مسترجع للعميل" inputMode="decimal" value={r.amount} onChange={e => setRf({ ...rf, [o.id]: { ...r, amount: e.target.value } })} style={{ maxWidth: 140 }} />
+          <input placeholder="السبب" value={r.reason} onChange={e => setRf({ ...rf, [o.id]: { ...r, reason: e.target.value } })} style={{ maxWidth: 180 }} />
+          <button className="btn ghost" style={{ padding: '4px 12px' }} disabled={!r.amount || r.reason.trim().length < 3} onClick={() => refund(o)}>تسجيل استرجاع</button>
+        </div>}
+      </div>) })}
+  </div>
 }

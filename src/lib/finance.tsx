@@ -27,7 +27,7 @@ export const BLOCKERS: Record<string, string> = {
 
 export const MISSING: Record<string, string> = {
   entity_type: 'نوع المنشأة', legal_name: 'الاسم التجاري', cr_number: 'رقم السجل التجاري', account_holder_name: 'اسم صاحب الحساب',
-  bank_name: 'اسم البنك', iban: 'آيبان سعودي صحيح', vat_certificate: 'الرقم الضريبي وشهادة التسجيل', gateway: 'ربط بوابة الدفع', gateway_invalid: 'مفتاح البوابة مرفوض',
+  bank_name: 'اسم البنك', iban: 'آيبان سعودي صحيح', vat_certificate: 'الرقم الضريبي وشهادة التسجيل', payment_method: 'رابط الدفع أو الدفع عند الاستلام',
 }
 
 export const ENTITY_TYPES: Record<string, string> = { factory: 'مصنع', distributor: 'موزع', trader: 'تاجر' }

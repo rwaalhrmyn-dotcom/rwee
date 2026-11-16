@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
-import { supabase, SUPABASE_URL } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
 import { useNavigate, Link } from 'react-router-dom'
@@ -49,10 +49,6 @@ export default function Checkout() {
   const direct = !!quote?.direct_payments
   const supplierDeliveryAvailable = direct ? !!group?.accepts_delivery : !!quote?.groups.length && quote.groups.every(g => g.accepts_delivery)
 
-  // Legacy (flag off): platform collects; keep the previous totals logic.
-  const legacyDelivery = quote ? quote.groups.reduce((s, g) => s + g.delivery_halalas, 0) : 0
-  const legacyBase = total + legacyDelivery
-  const legacyGrand = Math.round(legacyBase * 1.15)
 
   useEffect(() => {
     (async () => {
@@ -94,24 +90,9 @@ export default function Checkout() {
         if (ins.error) await supabase.from('profiles').update({ full_name: name, phone, city }).eq('id', user.id)
       }
     } catch { /* non-blocking */ }
-    try {
-      const fn = direct ? 'supplier-checkout' : 'tap-create-charge'
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ order_id: orderId }),
-      })
-      const out = await res.json().catch(() => ({}))
-      if (out.url) {
-        if (direct) group!.lines.forEach(l => remove(l.product_id)); else clear()
-        window.location.href = out.url
-        return
-      }
-      setBusy(false)
-      setMsg('تعذّر فتح صفحة الدفع حالياً. طلبك محفوظ كمعلّق — حاول الدفع مرة أخرى، وإن تكرر الأمر تواصل معنا.')
-    } catch {
-      setBusy(false)
-      setMsg('تعذّر الاتصال ببوابة الدفع. تحقق من اتصالك وحاول مرة أخرى.')
-    }
+    // Payment goes straight to the supplier (its payment link or cash on delivery) on the next page.
+    if (direct) group!.lines.forEach(l => remove(l.product_id)); else clear()
+    nav(`/order/${orderId}/pay`)
   }
 
   if (items.length === 0) return <section style={{ padding: '32px 0' }}><p className="muted">سلتك فارغة. <Link to="/products" style={{ color: 'var(--green)' }}>تصفّح المنتجات ←</Link></p></section>
@@ -187,13 +168,8 @@ export default function Checkout() {
             {group.delivery_halalas > 0 && row('التوصيل', sar(group.delivery_halalas))}
             {row(group.vat_rate_bp > 0 ? `ضريبة القيمة المضافة (${group.vat_rate_bp / 100}%)` : 'ضريبة القيمة المضافة (المورد غير مسجّل)', sar(group.vat_halalas))}
             {row('الإجمالي المستحق لهذا المورد', sar(group.total_halalas), true)}
-            <p className="muted" style={{ fontSize: 12, margin: '8px 0 0' }}>يُدفع المبلغ مباشرة لحساب المورد «{group.supplier_name}» عبر بوابة دفعه، وتُصدر فاتورة المبيعات باسمه.</p>
-          </> : <>
-            {row('إجمالي المنتجات', sar(total))}
-            {legacyDelivery > 0 && row('التوصيل', sar(legacyDelivery))}
-            {row('ضريبة القيمة المضافة (15%)', sar(legacyGrand - legacyBase))}
-            {row('الإجمالي شامل الضريبة', sar(legacyGrand), true)}
-          </>}
+            <p className="muted" style={{ fontSize: 12, margin: '8px 0 0' }}>يُدفع المبلغ مباشرة للمورد «{group.supplier_name}» عبر رابط الدفع الخاص به أو نقداً عند الاستلام، وتُصدر فاتورة المبيعات باسمه.</p>
+          </> : row('إجمالي المنتجات', sar(total), true)}
         </div>
         {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
         {(() => {
@@ -205,9 +181,9 @@ export default function Checkout() {
         })()}
         <button className="btn" style={{ width: '100%' }} onClick={submit}
           disabled={busy || !quote || (direct && !group) || address.trim().length < 6 || name.trim().length < 2 || phone.replace(/\D/g, '').length < 9}>
-          {busy ? 'جارٍ التحويل للدفع…' : direct && quote?.requires_split ? `ادفع طلب ${group?.supplier_name ?? 'المورد'} ←` : 'المتابعة للدفع ←'}
+          {busy ? 'جارٍ إنشاء الطلب…' : direct && quote?.requires_split ? `ادفع طلب ${group?.supplier_name ?? 'المورد'} ←` : 'المتابعة للدفع ←'}
         </button>
-        <p className="muted" style={{ fontSize: 13, marginTop: 8, textAlign: 'center' }}>الدفع الآمن عبر Tap · mada · Visa · Apple Pay</p>
+        <p className="muted" style={{ fontSize: 13, marginTop: 8, textAlign: 'center' }}>تدفع للمورد مباشرة: عبر رابط الدفع الخاص به أو نقداً عند الاستلام.</p>
       </div>
     </section>
   )

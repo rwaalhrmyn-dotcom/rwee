@@ -91,7 +91,7 @@ export default function RawaaAssistant() {
       if (/(تتبع|تابع|وين|اين|حاله|طلبي|طلبات|شحنه|توصيل وصل)/.test(s))
         return { text: en ? 'Track your orders and their status from your account page.' : 'تابع طلباتك وحالتها من صفحة «حسابي».', to: '/customer', cta: en ? 'My orders' : 'طلباتي' }
       if (/(دفع|ادفع|فيزا|مدى|مدا|ابل|apple|بطاقه|ضريبه|ضريبة|vat|سعر التوصيل|رسوم)/.test(s))
-        return { text: en ? 'We accept mada, Visa and Apple Pay via Tap. Prices include 15% VAT.' : 'نقبل مدى وVisa وApple Pay عبر Tap، والأسعار شاملة ضريبة القيمة المضافة 15٪.' }
+        return { text: en ? 'You pay the supplier directly: through the supplier\'s payment link or cash on delivery. VAT is shown per supplier at checkout.' : 'تدفع للمورد مباشرة: عبر رابط الدفع الخاص به أو نقداً عند الاستلام، وتظهر الضريبة لكل مورد عند إتمام الطلب.' }
       if (/(توصيل|شحن|يوصل|تغطيه|مكان التوصيل|خريطه)/.test(s))
         return { text: en ? 'We deliver to mosques and homes. Pin your exact location on the map at checkout.' : 'نوصّل للمساجد والمنازل. حدّد موقعك بدقّة على الخريطة عند إتمام الطلب.', to: '/products', cta: en ? 'Shop now' : 'تسوّق الآن' }
       if (/(تواصل|اتصال|واتس|whatsapp|رقم|جوال|ايميل|بريد|دعم|شكوى|خدمه العملاء)/.test(s))

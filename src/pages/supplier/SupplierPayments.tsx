@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Badge, BLOCKERS, ENTITY_TYPES, MISSING, PROFILE_STATUS, bankFromIban, callFn, isValidSaIban, isValidSaVat, normalizeIban } from '../../lib/finance'
+import { Badge, BLOCKERS, ENTITY_TYPES, MISSING, PROFILE_STATUS, bankFromIban, isValidSaIban, isValidSaVat, normalizeIban } from '../../lib/finance'
 
 type Profile = Record<string, any>
 
@@ -10,7 +10,7 @@ export default function SupplierPayments() {
   const [info, setInfo] = useState<any>(null)
   const [f, setF] = useState<Profile>({ entity_type: '', legal_name: '', cr_number: '', account_holder_name: '', bank_name: '', iban: '', vat_registered: true, tax_number: '', vat_certificate_path: '' })
   const [cert, setCert] = useState<File | null>(null)
-  const [key, setKey] = useState(''); const [merchant, setMerchant] = useState('')
+  const [pm, setPm] = useState({ link: '', cod: false, instructions: '' })
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
 
   const load = async (id: string) => {
@@ -20,6 +20,7 @@ export default function SupplierPayments() {
     const p = data?.profile
     if (p) setF((x: Profile) => ({ ...x, entity_type: p.entity_type ?? '', legal_name: p.legal_name ?? '', cr_number: p.cr_number ?? '', account_holder_name: p.account_holder_name ?? '',
       bank_name: p.bank_name ?? '', iban: p.iban ?? '', vat_registered: !!p.vat_registered, tax_number: p.tax_number ?? '', vat_certificate_path: p.vat_certificate_path ?? '' }))
+    if (p) setPm({ link: p.payment_link ?? '', cod: !!p.accepts_cod, instructions: p.payment_instructions ?? '' })
   }
   useEffect(() => { (async () => {
     const { data } = await supabase.rpc('my_supplier_dashboard')
@@ -52,14 +53,14 @@ export default function SupplierPayments() {
     } catch (e: any) { setMsg(e.message) } finally { setBusy(false) }
   }
 
-  const connect = async () => {
+  const linkOk = !pm.link.trim() || /^https:\/\/\S{4,}$/.test(pm.link.trim())
+  const savePm = async () => {
     if (!sup) return
     setBusy(true); setMsg(null)
-    const { ok, data } = await callFn('supplier-gateway', { supplier_id: sup.id, provider: 'tap', secret_key: key.trim(), merchant_id: merchant.trim() || null })
-    setKey('')
+    const { data, error } = await supabase.rpc('supplier_set_payment_methods', { p_supplier: sup.id, p_link: pm.link.trim() || null, p_cod: pm.cod, p_instructions: pm.instructions.trim() || null })
     setBusy(false)
-    if (!ok) { setMsg('تعذّر ربط البوابة: ' + (data?.error ?? 'خطأ')); return }
-    setMsg(data?.change_request ? 'تم التحقق من المفتاح وإرسال تغيير البوابة لمراجعة الإدارة.' : `تم التحقق من المفتاح لدى Tap (${data.mode === 'live' ? 'حساب حي' : 'وضع تجريبي'}) وحفظه مشفّراً.`)
+    if (error) { setMsg('تعذّر الحفظ: ' + error.message); return }
+    setMsg(data?.status === 'pending' ? 'تم الحفظ وإرسال طرق الدفع للتحقق من الإدارة. يتوقف استقبال الطلبات حتى الاعتماد.' : 'تم حفظ طرق استلام الدفع.')
     await load(sup.id)
   }
 
@@ -70,7 +71,7 @@ export default function SupplierPayments() {
     <section style={{ padding: '32px 0', maxWidth: 680 }}>
       <Link to="/supplier" className="muted">→ لوحة المورد</Link>
       <h2 style={{ color: 'var(--green)' }}>إعدادات الدفع واستلام المستحقات</h2>
-      <p className="muted" style={{ fontSize: 14 }}>يدفع العميل مرة واحدة، ويُحصَّل ثمن طلبك عبر بوابة الدفع الخاصة بك مباشرة إلى حسابك — لا تمر أموالك بحساب منصة رواء. لا يمكنك استقبال طلبات مدفوعة حتى تكتمل هذه البيانات ويتم التحقق منها.</p>
+      <p className="muted" style={{ fontSize: 14 }}>يدفع العميل لك مباشرة عبر رابط الدفع الخاص بك أو نقداً عند الاستلام — لا تمر أموالك بحساب منصة رواء، وتُسدَّد عمولة المنصة شهرياً. لا يمكنك استقبال طلبات مدفوعة حتى تكتمل هذه البيانات ويتم التحقق منها.</p>
       {msg && <div className="note" style={{ margin: '10px 0' }}>{msg}</div>}
       {sup && <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -82,7 +83,7 @@ export default function SupplierPayments() {
         {info?.blockers?.length > 0
           ? <ul style={{ fontSize: 13, margin: '8px 0 0', paddingInlineStart: 18 }}>{info.blockers.map((b: string) => <li key={b}>{BLOCKERS[b] ?? b}</li>)}</ul>
           : info && <p style={{ fontSize: 13, color: 'var(--green)', margin: '8px 0 0' }}>✓ حسابك مفعّل لاستقبال الطلبات المدفوعة.</p>}
-        {info?.pending_change && <div className="note" style={{ marginTop: 10 }}>لديك طلب تعديل ({info.pending_change.fields.map((x: string) => MISSING[x] ?? x).join('، ')}{info.pending_change.gateway ? '، بوابة الدفع' : ''}) بانتظار اعتماد الإدارة.</div>}
+        {info?.pending_change && <div className="note" style={{ marginTop: 10 }}>لديك طلب تعديل ({info.pending_change.fields.map((x: string) => MISSING[x] ?? x).join('، ')}) بانتظار اعتماد الإدارة.</div>}
       </div>}
 
       {sup && <div className="card">
@@ -107,12 +108,15 @@ export default function SupplierPayments() {
       </div>}
 
       {sup && <div className="card" style={{ marginTop: 14 }}>
-        <h3 style={{ marginTop: 0, fontSize: 15, color: 'var(--green)' }}>بوابة الدفع الإلكترونية الخاصة بك</h3>
-        <p className="muted" style={{ fontSize: 13 }}>البوابة المدعومة حالياً: <strong>Tap Payments</strong>. أدخل المفتاح السري لحساب منشأتك في Tap؛ نتحقق منه مع Tap ونحفظه مشفّراً على الخادم فقط، ولا يُعرض مرة أخرى.</p>
-        {p?.gateway_provider && <p style={{ fontSize: 13 }}>المرتبط حالياً: Tap · {p.gateway_mode === 'live' ? 'حساب حي' : 'وضع تجريبي'} · مفتاح ينتهي بـ <code dir="ltr">…{p.gateway_key_hint}</code> · التحقق: {p.gateway_check_status === 'valid' ? '✓ ناجح' : p.gateway_check_status}</p>}
-        {field('المفتاح السري (Secret Key)', <input dir="ltr" type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} placeholder="sk_live_… أو sk_test_…" />)}
-        {field('معرّف التاجر لدى Tap (اختياري)', <input dir="ltr" value={merchant} onChange={e => setMerchant(e.target.value)} />)}
-        <button className="btn" style={{ width: '100%' }} disabled={busy || !/^sk_(live|test)_/.test(key.trim())} onClick={connect}>{busy ? 'جارٍ التحقق…' : 'ربط البوابة والتحقق ←'}</button>
+        <h3 style={{ marginTop: 0, fontSize: 15, color: 'var(--green)' }}>طرق استلام ثمن الطلبات من العملاء</h3>
+        <p className="muted" style={{ fontSize: 13 }}>يدفع العميل لك مباشرة. فعّل طريقة واحدة على الأقل: رابط الدفع الخاص بمنشأتك (من بنكك أو أي مزوّد دفع تتعامل معه) و/أو الدفع عند الاستلام. أي تعديل على هذه الطرق بعد الاعتماد يُراجع من الإدارة قبل استئناف استقبال الطلبات.</p>
+        {field('رابط الدفع الخاص بك', <input dir="ltr" value={pm.link} onChange={e => setPm({ ...pm, link: e.target.value })} placeholder="https://…" />,
+          !pm.link ? 'اختياري إذا فعّلت الدفع عند الاستلام.' : linkOk ? '✓ رابط صالح' : '✗ يجب أن يبدأ الرابط بـ https://')}
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '8px 0' }}>
+          <input type="checkbox" checked={pm.cod} onChange={e => setPm({ ...pm, cod: e.target.checked })} /> أقبل الدفع نقداً عند الاستلام
+        </label>
+        {field('تعليمات الدفع للعميل (اختياري)', <textarea rows={2} maxLength={500} value={pm.instructions} onChange={e => setPm({ ...pm, instructions: e.target.value })} />)}
+        <button className="btn" style={{ width: '100%' }} disabled={busy || !linkOk || (!pm.link.trim() && !pm.cod)} onClick={savePm}>{busy ? 'جارٍ الحفظ…' : 'حفظ طرق الدفع ←'}</button>
       </div>}
     </section>
   )

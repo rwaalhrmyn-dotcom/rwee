@@ -33,7 +33,7 @@ import CompareSuppliers from './pages/CompareSuppliers'
 import { CartProvider } from './context/CartContext'
 import Join from './pages/Join'
 import About from './pages/About'
-import PaymentCallback from './pages/PaymentCallback'
+const OrderPayment = React.lazy(() => import('./pages/OrderPayment'))
 import { LanguageProvider } from './lib/i18n'
 import { initGA } from './lib/analytics'
 // Finance pages are loaded on demand to keep the storefront bundle light.
@@ -85,7 +85,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/compare" element={<CompareSuppliers />} />
             <Route path="/join" element={<Join />} />
             <Route path="/about" element={<About />} />
-            <Route path="/payment/callback" element={<PaymentCallback />} />
+            <Route path="/order/:id/pay" element={lazyEl(<OrderPayment />)} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
