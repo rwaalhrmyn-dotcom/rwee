@@ -762,12 +762,15 @@ begin
   begin perform public.affiliate_register('{"full_name":"مسوق تجريبي"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', false);
     perform test.ok('18 affiliates', 'registration requires explicit agreement', false);
   exception when others then perform test.ok('18 affiliates', 'registration requires explicit agreement', sqlerrm ilike '%agreement%', sqlerrm); end;
-  r := public.affiliate_register('{"full_name":"مسوق تجريبي","phone":"0500000041","channels":"انستقرام"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', true);
+  begin perform public.affiliate_register('{"full_name":"مسوق تجريبي","email":"not-an-email"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', true);
+    perform test.ok('18 affiliates', 'invalid e-mail rejected (no verification code needed)', false);
+  exception when others then perform test.ok('18 affiliates', 'invalid e-mail rejected (no verification code needed)', sqlerrm ilike '%valid e-mail%', sqlerrm); end;
+  r := public.affiliate_register('{"full_name":"مسوق تجريبي","email":"Marketer.Contact@Example.com","phone":"0500000041","channels":"انستقرام"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', true);
   aff := (r->>'id')::uuid; code := r->>'code';
   perform test.ok('18 affiliates', 'e-mail registration creates a pending marketer with a referral code',
     r->>'status' = 'pending' and code ~ '^RW', r::text);
   perform test.reset();
-  perform test.ok('18 affiliates', 'marketer identity is the verified e-mail', (select email from public.affiliates where id=aff) = 'marketer@rawaa.test');
+  perform test.ok('18 affiliates', 'e-mail from the form is stored as the marketer contact', (select email from public.affiliates where id=aff) = 'marketer.contact@example.com');
   perform test.ok('18 affiliates', 'signed contract recorded (version, hash, signer)',
     exists(select 1 from private.affiliate_contract_acceptances where affiliate_id=aff and body_sha256=c->>'body_sha256'));
   perform test.ok('18 affiliates', 'link does not work before approval', not public.track_affiliate_click(code));

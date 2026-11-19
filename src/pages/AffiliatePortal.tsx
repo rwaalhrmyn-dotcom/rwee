@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { riyal, pct, isValidSaIban, normalizeIban } from '../lib/finance'
 import { AFF_STATUS, EARN_STATE, SIDE } from '../lib/affiliate'
 
-// Commission marketer portal: e-mail sign-in (one-time code) -> registration with the electronic
-// agreement -> dashboard with referral links, visits, orders, earnings and payouts.
+// Commission marketer portal: sign-in like the rest of the site (mobile OTP or Google) -> registration
+// (e-mail is a plain contact field) with the electronic agreement -> dashboard with referral links,
+// visits, orders, earnings and payouts.
 export default function AffiliatePortal() {
   const [user, setUser] = useState<{ id: string; email?: string } | null | undefined>(undefined)
   const [data, setData] = useState<any>(undefined)
@@ -19,9 +21,9 @@ export default function AffiliatePortal() {
     <section style={{ padding: '32px 0', maxWidth: 820 }}>
       <h2 style={{ color: 'var(--green)' }}>التسويق بالعمولة — رِواء الحرمين</h2>
       {user === undefined ? <p className="muted">جارٍ التحميل…</p>
-        : !user || !user.email ? <EmailLogin hasOtherLogin={!!user} onDone={load} />
+        : !user ? <SignIn />
         : data === undefined ? <p className="muted">جارٍ التحميل…</p>
-        : data === null ? <Register email={user.email} onDone={load} />
+        : data === null ? <Register email={user.email ?? ''} onDone={load} />
         : <Dashboard d={data} onChange={load} />}
     </section>
   )
@@ -40,38 +42,19 @@ function Intro() {
   </div>
 }
 
-function EmailLogin({ hasOtherLogin, onDone }: { hasOtherLogin: boolean; onDone: () => void }) {
-  const [email, setEmail] = useState(''); const [code, setCode] = useState(''); const [sent, setSent] = useState(false)
-  const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
-  const send = async () => {
-    setBusy(true); setMsg(null)
-    const { error } = hasOtherLogin ? await supabase.auth.updateUser({ email: email.trim() }) : await supabase.auth.signInWithOtp({ email: email.trim() })
-    setBusy(false)
-    if (error) setMsg(error.message); else { setSent(true); setMsg('أرسلنا رمز التحقق إلى بريدك الإلكتروني.') }
-  }
-  const verify = async () => {
-    setBusy(true); setMsg(null)
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: hasOtherLogin ? 'email_change' : 'email' })
-    setBusy(false)
-    if (error) setMsg(error.message); else onDone()
-  }
+function SignIn() {
   return <>
     <Intro />
     <div className="card">
-      <h3 style={{ marginTop: 0, fontSize: 16 }}>التسجيل بالبريد الإلكتروني</h3>
-      {hasOtherLogin && <p className="muted" style={{ fontSize: 13 }}>حسابك الحالي بلا بريد إلكتروني. أضف بريدك وتحقق منه للتسجيل كمسوّق.</p>}
-      {msg && <div className="note" style={{ marginBottom: 8 }}>{msg}</div>}
-      <div className="field"><label>البريد الإلكتروني</label><input type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" disabled={sent} /></div>
-      {sent && <div className="field"><label>رمز التحقق</label><input inputMode="numeric" dir="ltr" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 8))} /></div>}
-      {!sent ? <button className="btn" style={{ width: '100%' }} disabled={busy || !/^\S+@\S+\.\S+$/.test(email)} onClick={send}>إرسال رمز التحقق ←</button>
-        : <button className="btn" style={{ width: '100%' }} disabled={busy || code.length < 6} onClick={verify}>تحقق ومتابعة ←</button>}
+      <p style={{ marginTop: 0 }}>سجّل الدخول أولاً (برقم الجوال أو حساب Google) ثم أكمل نموذج الانضمام وتوقيع الاتفاقية.</p>
+      <Link className="btn" to="/customer/login?redirect=/affiliate" style={{ display: 'block', textAlign: 'center' }}>تسجيل الدخول والمتابعة ←</Link>
     </div>
   </>
 }
 
 function Register({ email, onDone }: { email: string; onDone: () => void }) {
   const [c, setC] = useState<any>(null)
-  const [f, setF] = useState({ full_name: '', phone: '', city: '', channels: '', bank_name: '', iban: '', account_holder_name: '' })
+  const [f, setF] = useState({ full_name: '', email, phone: '', city: '', channels: '', bank_name: '', iban: '', account_holder_name: '' })
   const [agree, setAgree] = useState(false); const [signer, setSigner] = useState('')
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false)
   useEffect(() => { supabase.rpc('current_affiliate_contract').then(r => setC(r.data)) }, [])
@@ -88,8 +71,8 @@ function Register({ email, onDone }: { email: string; onDone: () => void }) {
   return <>
     <Intro />
     <div className="card">
-      <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>البريد المسجّل: <strong dir="ltr">{email}</strong></p>
       {field('full_name', 'الاسم الكامل *')}
+      {field('email', 'البريد الإلكتروني *', { type: 'email', dir: 'ltr', placeholder: 'name@example.com' })}
       {field('phone', 'رقم الجوال (للتواصل)', { inputMode: 'numeric', placeholder: '05xxxxxxxx' })}
       {field('city', 'المدينة')}
       {field('channels', 'قنوات التسويق (حسابات التواصل، موقع، مجموعات…)')}
@@ -107,7 +90,7 @@ function Register({ email, onDone }: { email: string; onDone: () => void }) {
         <span style={{ fontSize: 14 }}>قرأت الاتفاقية كاملة وأوافق عليها وأقرّ بأن هذا التوقيع الإلكتروني ملزم لي، وأنه لا يحق لي المطالبة بأي مبالغ ما لم يتحقق ربح فعلي عن طريقي.</span>
       </label>
       {msg && <div className="note" style={{ margin: '8px 0' }}>{msg}</div>}
-      <button className="btn" style={{ width: '100%' }} disabled={busy || !c || !agree || f.full_name.trim().length < 3 || signer.trim() !== f.full_name.trim() || !ibanOk} onClick={submit}>
+      <button className="btn" style={{ width: '100%' }} disabled={busy || !c || !agree || f.full_name.trim().length < 3 || !/^\S+@\S+\.\S+$/.test(f.email.trim()) || signer.trim() !== f.full_name.trim() || !ibanOk} onClick={submit}>
         {busy ? 'جارٍ الإرسال…' : 'توقيع الاتفاقية وإرسال طلب الانضمام ←'}</button>
       {agree && signer.trim() && signer.trim() !== f.full_name.trim() && <p className="muted" style={{ fontSize: 12 }}>يجب أن يطابق اسم التوقيع الاسم الكامل.</p>}
     </div>
