@@ -144,3 +144,6 @@ h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em}
 .orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--line)}
 
 @media(max-width:860px){.hero{grid-template-columns:1fr;gap:28px;padding:32px 0}.hero h1{font-size:34px}.promo,.gift{padding:26px}.promo h3,.gift h3{font-size:22px}.ftr-grid{grid-template-columns:1fr 1fr}.sec-head h2{font-size:26px}}
+
+/* printing documents (invoices): hide site chrome */
+@media print{.no-print,.topbar,.nav2,.footer,.wa-float{display:none!important}body{background:#fff}main.container{max-width:none;padding:0}}

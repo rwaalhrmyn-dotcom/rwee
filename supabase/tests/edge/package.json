@@ -1,0 +1,7 @@
+{
+  "name": "rawaa-edge-finance-tests",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --experimental-strip-types --no-warnings --test edge_finance.test.ts" },
+  "devDependencies": { "pg": "8.13.1" }
+}

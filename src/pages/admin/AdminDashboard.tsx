@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+const AdminFinance = lazy(() => import('./AdminFinance'))
 import { supabase, SUPABASE_URL } from '../../lib/supabase'
 import { sar } from '../../lib/format'
 import { Link } from 'react-router-dom'
@@ -7,12 +8,12 @@ const ORDER_STATUS: Record<string, string> = {
   pending: 'بانتظار المراجعة', confirmed: 'مؤكّد', preparing: 'قيد التجهيز',
   out_for_delivery: 'قيد التوصيل', delivered: 'تم التسليم', cancelled: 'ملغي',
 }
-const TABS = ['overview', 'orders', 'customers', 'suppliers', 'products', 'deliveries', 'inquiries', 'staff', 'audit', 'settings'] as const
+const TABS = ['overview', 'orders', 'customers', 'suppliers', 'products', 'deliveries', 'inquiries', 'finance', 'staff', 'audit', 'settings'] as const
 type Tab = typeof TABS[number]
 const TAB_LABEL: Record<Tab, string> = {
   overview: 'نظرة عامة', orders: 'الطلبات', customers: 'العملاء', suppliers: 'الموردون',
   products: 'المنتجات والأسعار', deliveries: 'التوصيل والشحن', inquiries: 'الاستفسارات',
-  staff: 'طاقم الإدارة', audit: 'سجل التدقيق', settings: 'الإعدادات',
+  finance: 'المالية والعمولات', staff: 'طاقم الإدارة', audit: 'سجل التدقيق', settings: 'الإعدادات',
 }
 
 export default function AdminDashboard() {
@@ -52,6 +53,7 @@ export default function AdminDashboard() {
       {tab === 'products' && <Products />}
       {tab === 'deliveries' && <Deliveries />}
       {tab === 'inquiries' && <Inquiries />}
+      {tab === 'finance' && <Suspense fallback={<p className="muted">جارٍ التحميل…</p>}><AdminFinance /></Suspense>}
       {tab === 'staff' && <Staff />}
       {tab === 'audit' && <Audit />}
       {tab === 'settings' && <Settings />}
@@ -267,7 +269,7 @@ function Products() {
     setMsg(null)
     const e = edit[p.id] || { price: String(p.price_halalas), stock: String(p.stock) }
     const { error } = await supabase.rpc('admin_update_product', {
-      p_id: p.id, p_price_halalas: Number(e.price), p_stock: Number(e.stock), p_active: p.active, p_featured: p.featured,
+      p_id: p.id, p_price_halalas: null, p_stock: Number(e.stock), p_active: p.active, p_featured: p.featured,
     })
     if (error) setMsg('تعذّر: ' + error.message); else { setMsg('تم الحفظ'); reload() }
   }
@@ -307,7 +309,7 @@ function Products() {
               <span className="muted" style={{ fontSize: 13 }}>{p.supplier_name || '—'} · {p.category}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', marginTop: 8 }}>
-              <label style={{ fontSize: 13 }}>السعر (هللة)<input value={e.price} onChange={ev => setEdit({ ...edit, [p.id]: { ...e, price: ev.target.value.replace(/\D/g, '') } })} style={{ width: 110 }} /></label>
+              <span style={{ fontSize: 13 }}>سعر البيع: <strong>{sar(p.price_halalas)}</strong> <span className="muted">(يُدار من «المالية والعمولات ← إدارة الأسعار»)</span></span>
               <label style={{ fontSize: 13 }}>المخزون<input value={e.stock} onChange={ev => setEdit({ ...edit, [p.id]: { ...e, stock: ev.target.value.replace(/\D/g, '') } })} style={{ width: 90 }} /></label>
               <button className="btn" style={{ padding: '7px 14px' }} onClick={() => save(p)}>حفظ</button>
               <button className="btn ghost" style={{ padding: '7px 12px' }} onClick={() => toggle(p, 'active')}>{p.active ? 'إخفاء' : 'إظهار'}</button>

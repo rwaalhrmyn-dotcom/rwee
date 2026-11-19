@@ -5,7 +5,7 @@ import { sar, CATEGORIES } from '../lib/format'
 import { useCart } from '../context/CartContext'
 import { useSeo } from '../lib/seo'
 
-type Product = { id: string; name: string; description: string; category: string; price_halalas: number; stock: number; unit: string; cities: string[] }
+type Product = { id: string; name: string; description: string; category: string; price_halalas: number; display_price_halalas?: number; vat_rate_bp?: number; stock: number; unit: string; cities: string[] }
 
 export default function Products() {
   const [items, setItems] = useState<Product[]>([])
@@ -19,7 +19,7 @@ export default function Products() {
   useEffect(() => {
     (async () => {
       setLoading(true); setErr(null)
-      let q = supabase.from('products').select('id,name,description,category,price_halalas,stock,unit,cities').order('name')
+      let q = supabase.from('products').select('id,name,description,category,price_halalas,display_price_halalas,vat_rate_bp,stock,unit,cities').order('name')
       if (cat) q = q.eq('category', cat)
       const { data, error } = await q
       if (error) setErr(error.message); else setItems(data || [])
@@ -46,7 +46,10 @@ export default function Products() {
             <h3 style={{ margin: '10px 0 4px' }}>{p.name}</h3>
             <p className="muted" style={{ minHeight: 40, fontSize: 14 }}>{p.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-              <span className="price">{sar(p.price_halalas)}</span>
+              <span>
+                <span className="price">{sar(p.display_price_halalas ?? p.price_halalas)}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 11 }}>{(p.vat_rate_bp ?? 0) > 0 ? 'شامل ضريبة القيمة المضافة' : 'المورد غير خاضع للضريبة'}</span>
+              </span>
               <span className="muted" style={{ fontSize: 13 }}>{p.unit} · مخزون {p.stock}</span>
             </div>
             <button className="btn" style={{ width: '100%', marginTop: 12 }} disabled={p.stock <= 0}

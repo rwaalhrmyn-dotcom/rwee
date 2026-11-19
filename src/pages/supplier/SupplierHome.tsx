@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { CITIES } from '../../lib/format'
 import { Link } from 'react-router-dom'
+import { BLOCKERS, PROFILE_STATUS, Badge } from '../../lib/finance'
 
 type Acct = {
   id: string; name: string; approval_status: string; cities: string[]
@@ -120,14 +121,17 @@ export default function SupplierHome() {
                   <span className="badge" style={{ background: a.accepts_delivery ? 'var(--green)' : 'var(--line)', color: a.accepts_delivery ? '#fff' : 'inherit' }}>{a.accepts_delivery ? 'مفعّل' : 'متوقف'}</span>
                 </label>
 
+                <SellingStatus supplierId={a.id} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-                  <Link className="btn" to="/supplier/inventory">إدارة المخزون والأسعار (ر.س)</Link>
+                  <Link className="btn" to="/supplier/payments">إعدادات الدفع واستلام المستحقات</Link>
+                  <Link className="btn" to="/supplier/finance">المالية والعمولات والفواتير</Link>
+                  <Link className="btn ghost" to="/supplier/inventory">إدارة المخزون والأسعار (ر.س)</Link>
                   <Link className="btn ghost" to="/supplier/products/new">+ منتج</Link>
                   <Link className="btn ghost" to="/supplier/import">استيراد Excel</Link>
                   <Link className="btn ghost" to="/supplier/orders">الطلبات</Link>
                 </div>
                 <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-                  تُدخل <strong>صافي سعرك بالريال</strong>؛ تُضاف رسوم المنصة والضريبة تلقائياً على سعر العميل.
+                  تُدخل <strong>سعرك الأصلي بالريال</strong>؛ تحدد رواء سعر العرض النهائي وفق قواعد التسعير المعتمدة، ويُحصَّل ثمن الطلب مباشرة لحسابك ثم تُسدَّد عمولات المنصة شهرياً.
                 </p>
               </>
             )}
@@ -156,6 +160,23 @@ function Stat({ label, value, warn }: { label: string; value: number; warn?: boo
     <div style={{ flex: '1 1 120px', minWidth: 110, padding: 12, border: '1px solid var(--line)', borderRadius: 12, textAlign: 'center' }}>
       <div style={{ fontSize: 22, fontWeight: 700, color: warn ? '#b00020' : 'var(--green)' }}>{value}</div>
       <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{label}</div>
+    </div>
+  )
+}
+
+function SellingStatus({ supplierId }: { supplierId: string }) {
+  const [info, setInfo] = useState<any>(null)
+  useEffect(() => { supabase.rpc('my_payment_profile', { p_supplier: supplierId }).then(({ data }) => setInfo(data)) }, [supplierId])
+  if (!info) return null
+  return (
+    <div style={{ marginTop: 12, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <strong style={{ fontSize: 14 }}>حالة استقبال الطلبات المدفوعة</strong>
+        <Badge s={info.profile?.status ?? 'incomplete'} map={PROFILE_STATUS} />
+      </div>
+      {info.selling_enabled
+        ? <p style={{ fontSize: 13, color: 'var(--green)', margin: '6px 0 0' }}>✓ منتجاتك ظاهرة للعملاء وتستقبل طلبات مدفوعة.</p>
+        : <ul style={{ fontSize: 13, margin: '6px 0 0', paddingInlineStart: 18 }}>{(info.blockers ?? []).map((b: string) => <li key={b}>{BLOCKERS[b] ?? b}</li>)}</ul>}
     </div>
   )
 }
