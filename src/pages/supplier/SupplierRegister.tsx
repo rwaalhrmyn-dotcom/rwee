@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { getReferral } from '../../lib/affiliate'
 import { Link } from 'react-router-dom'
 import { ENTITY_TYPES, bankFromIban, isValidSaIban, isValidSaVat, normalizeIban } from '../../lib/finance'
 
@@ -77,7 +78,12 @@ export default function SupplierRegister() {
         p_contract_version: contract.version_id, p_contract_hash: contract.body_sha256, p_signer_name: signer.trim(), p_agreed: agree, p_request: requestId,
       })
       setBusy(false)
-      if (error) setMsg('تعذّر إرسال الطلب: ' + error.message); else setOk(true)
+      if (error) setMsg('تعذّر إرسال الطلب: ' + error.message)
+      else {
+        const ref = getReferral()
+        if (ref) await supabase.rpc('attach_application_affiliate', { p_code: ref }).then(() => {}, () => {})
+        setOk(true)
+      }
     } catch (e: any) { setBusy(false); setMsg(e.message || String(e)) }
   }
 

@@ -34,6 +34,7 @@ import { CartProvider } from './context/CartContext'
 import Join from './pages/Join'
 import About from './pages/About'
 const OrderPayment = React.lazy(() => import('./pages/OrderPayment'))
+const AffiliatePortal = React.lazy(() => import('./pages/AffiliatePortal'))
 import { LanguageProvider } from './lib/i18n'
 import { initGA } from './lib/analytics'
 // Finance pages are loaded on demand to keep the storefront bundle light.
@@ -86,6 +87,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/join" element={<Join />} />
             <Route path="/about" element={<About />} />
             <Route path="/order/:id/pay" element={lazyEl(<OrderPayment />)} />
+            <Route path="/affiliate" element={lazyEl(<AffiliatePortal />)} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

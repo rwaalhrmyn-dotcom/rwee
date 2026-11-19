@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
+import { getReferral } from '../lib/affiliate'
 import { useCart } from '../context/CartContext'
 import { sar, CITIES } from '../lib/format'
 import { useNavigate, Link } from 'react-router-dom'
@@ -81,6 +82,8 @@ export default function Checkout() {
       setMsg(error.message.includes('multi_supplier_order') ? 'يلزم الدفع لكل مورد على حدة. اختر طلب مورد واحد ثم تابع.' : 'تعذّر إنشاء الطلب: ' + error.message)
       return
     }
+    const ref = getReferral()
+    if (ref) await supabase.rpc('attach_order_affiliate', { p_order: orderId, p_code: ref }).then(() => {}, () => {})
     const dset = await supabase.rpc('set_order_delivery', { p_order_id: orderId, p_method: direct ? group!.delivery_method : method })
     if (dset.error) { setBusy(false); setMsg('تعذّر تحديد طريقة التوصيل: ' + dset.error.message); return }
     try {

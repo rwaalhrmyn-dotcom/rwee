@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { captureReferral } from '../lib/affiliate'
 import { useCart } from '../context/CartContext'
 import { useI18n, LANGS } from '../lib/i18n'
 import PayMethods from './PayMethods'
@@ -12,6 +13,8 @@ export default function Layout() {
   const [open, setOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const curLang = LANGS.find(l => l.code === lang)
+  const loc = useLocation()
+  useEffect(() => { captureReferral(loc.search) }, [loc.search])
 
   return (
     <>
@@ -124,6 +127,7 @@ export default function Layout() {
               <Link to="/suppliers">{t('suppliers')}</Link>
               <Link to="/compare">{t('compare')}</Link>
               <Link to="/supplier/register">{t('joinSupplier')}</Link>
+              <Link to="/affiliate">{en ? 'Become an affiliate marketer' : 'سجّل كمسوّق بالعمولة'}</Link>
             </div>
             <div>
               <h4>{t('ftrAccount')}</h4>

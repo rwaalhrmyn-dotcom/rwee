@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { AFF_STATUS, EARN_STATE, SIDE } from '../../lib/affiliate'
 import { Badge, BLOCKERS, ENTITY_TYPES, INVOICE_STATUS, MISSING, PROFILE_STATUS, pct, riyal, toHalalas } from '../../lib/finance'
 
 // Admin finance console: pricing & commissions, payment methods, contracts, commission invoices,
@@ -10,6 +11,7 @@ import { Badge, BLOCKERS, ENTITY_TYPES, INVOICE_STATUS, MISSING, PROFILE_STATUS,
 const SECTIONS = {
   sales: 'تتبع المبيعات',
   inventory: 'الجرد',
+  affiliates: 'المسوقون بالعمولة',
   pricing: 'إدارة الأسعار والعمولات',
   gateways: 'وسائل دفع الموردين',
   contracts: 'العقود والإصدارات',
@@ -66,6 +68,7 @@ export default function AdminFinance() {
       {msg && <div className="note" style={{ marginBottom: 10, borderColor: msg.ok ? 'var(--green)' : '#b00020' }}>{msg.text}</div>}
       {sec === 'sales' && <Sales />}
       {sec === 'inventory' && <Inventory />}
+      {sec === 'affiliates' && <Affiliates {...P} />}
       {sec === 'pricing' && <Pricing {...P} />}
       {sec === 'gateways' && <Gateways {...P} />}
       {sec === 'contracts' && <Contracts {...P} />}
@@ -741,4 +744,100 @@ function Uninvoiced({ run, onDone }: Props & { onDone: () => void }) {
       </Table>}
     <p className="muted" style={{ fontSize: 12 }}>تُحتسب العمولة عند اكتمال الطلب ودفعه. تصدر فاتورة واحدة لكل مورد عن كل شهر بعد انتهائه، ويمكن إصدارها هنا لمورد بعينه أو للجميع من «إقفال فترة شهرية».</p>
   </Card>
+}
+
+// ------------------------------------------------------------------ commission marketers
+function Affiliates({ run }: Props) {
+  const [rows, setRows] = useState<any[]>([])
+  const [filter, setFilter] = useState('')
+  const [open, setOpen] = useState<string | null>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [suppliers, setSuppliers] = useState<[string, string][]>([])
+  const [f, setF] = useState<Record<string, { sales: string; supplier: string; note: string; payout: string; ref: string; sup: string }>>({})
+  const load = () => run(async () => {
+    setRows(await rpc('admin_affiliates') ?? [])
+    const p: any[] = await rpc('admin_payment_profiles') ?? []; setSuppliers(p.map(x => [x.supplier_id, x.supplier_name]))
+  })
+  useEffect(() => { load() }, [])
+  const ff = (id: string) => f[id] ?? { sales: '', supplier: '', note: '', payout: '', ref: '', sup: '' }
+  const setFF = (id: string, k: string, v: string) => setF({ ...f, [id]: { ...ff(id), [k]: v } })
+  const bp = (v: string) => v.trim() === '' ? null : Math.round(Number(v) * 100)
+  const decide = (a: any, action: string, okMsg: string) => {
+    const x = ff(a.id)
+    if (action === 'terminate' && !confirm(`إنهاء اتفاقية ${a.full_name}؟ يتوقف رابطه فوراً وتبقى مستحقاته عن الطلبات المؤهلة السابقة.`)) return
+    run(async () => { await rpc('admin_affiliate_decide', { p_affiliate: a.id, p_action: action, p_note: x.note || null, p_sales_rate_bp: bp(x.sales), p_supplier_rate_bp: bp(x.supplier) }); await load() }, okMsg)
+  }
+  const showOrders = (id: string) => run(async () => { if (open === id) { setOpen(null); return } setOpen(id); setOrders(await rpc('admin_affiliate_orders', { p_affiliate: id }) ?? []) })
+  const voidOrder = (a: any, o: any, restore: boolean) => {
+    const reason = restore ? '' : prompt('سبب إلغاء عمولة هذا الطلب (تحايل / مخالفة):') ?? ''
+    if (!restore && reason.trim().length < 3) return
+    run(async () => { await rpc('admin_void_affiliate_order', { p_order: o.order_id, p_reason: restore ? null : reason }); setOrders(await rpc('admin_affiliate_orders', { p_affiliate: a.id }) ?? []); await load() },
+      restore ? 'تمت استعادة العمولة' : 'تم إلغاء عمولة الطلب')
+  }
+  const payout = (a: any) => { const x = ff(a.id)
+    run(async () => { await rpc('admin_record_affiliate_payout', { p_affiliate: a.id, p_amount_halalas: toHalalas(x.payout), p_reference: x.ref, p_note: null }); setFF(a.id, 'payout', ''); await load() }, 'تم تسجيل الدفعة للمسوّق') }
+  const linkSupplier = (a: any) => { const x = ff(a.id)
+    run(async () => { await rpc('admin_set_supplier_affiliate', { p_supplier: x.sup, p_affiliate: a.id }); await load() }, 'تم ربط المورد بالمسوّق') }
+  const view = rows.filter(a => !filter || a.effective_status === filter)
+  const counts = (k: string) => rows.filter(a => a.effective_status === k).length
+  return <>
+    <Card title="المسوقون بالعمولة" right={<select value={filter} onChange={e => setFilter(e.target.value)}>
+      <option value="">الكل ({rows.length})</option>{Object.entries(AFF_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label} ({counts(k)})</option>)}</select>}>
+      <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>اعتماد المسوّق يبدأ فترة التجربة (شهر) ويتطلب تحديد نسبتي العمولة: <strong>المبيعات</strong> عبر رابطه و<strong>جذب الموردين</strong>. تُحتسب النسبتان من صافي عمولة رواء المتحققة، ولا تصبح العمولة مستحقة للصرف إلا بعد سداد المورد لفاتورة عمولة رواء. بعد انتهاء التجربة اختر «استمرار» أو «إنهاء».</p>
+      {(counts('pending') > 0 || counts('trial_ended') > 0) && <div className="note">بانتظار قرارك: {counts('pending')} طلب انضمام · {counts('trial_ended')} انتهت فترة تجربتهم.</div>}
+    </Card>
+    {view.map(a => { const st = AFF_STATUS[a.effective_status] ?? { label: a.status, color: 'var(--muted)' }; const s = a.summary; const x = ff(a.id); return (
+      <Card key={a.id} title={`${a.full_name} · ${a.code}`} right={<span className="badge" style={{ background: st.color, color: '#fff' }}>{st.label}</span>}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: '3px 14px', fontSize: 13 }}>
+          <div>البريد: <span dir="ltr">{a.email}</span></div><div>الجوال: <span dir="ltr">{a.phone ?? '—'}</span></div>
+          <div>المدينة: {a.city ?? '—'}</div><div>القنوات: {a.channels ?? '—'}</div>
+          <div>وقّع الاتفاقية: {a.signed_at ? new Date(a.signed_at).toLocaleString('ar-SA') : '—'} ({a.contract_version})</div>
+          <div>التجربة: {a.trial_started_at ? `${fmtDate(a.trial_started_at)} — ${fmtDate(a.trial_ends_at)}` : 'لم تبدأ'}</div>
+          <div>عمولة المبيعات: <strong>{pct(a.sales_rate_bp)}</strong> · جذب الموردين: <strong>{pct(a.supplier_rate_bp)}</strong></div>
+          <div>الحساب: {a.bank_name ?? '—'} <span dir="ltr">{a.iban ?? ''}</span> {a.iban ? (a.iban_valid ? '✓' : '✗') : ''}</div>
+        </div>
+        {a.status_reason && <p className="muted" style={{ fontSize: 12 }}>ملاحظة: {a.status_reason}</p>}
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 13, margin: '8px 0', padding: 8, background: 'var(--bg-soft,#f7faf8)', borderRadius: 8 }}>
+          <span>زيارات: {s.clicks} (30 يوماً: {s.clicks_30d})</span><span>طلبات عبر الرابط: {s.orders}</span><span>موردون: {s.referred_suppliers} ({s.supplier_orders} طلب)</span>
+          <span>مبيعات منسوبة: {riyal(s.sales_halalas)}</span><span>بانتظار الاكتمال: {riyal(s.pending_halalas)}</span>
+          <span>بانتظار تحصيل رواء: {riyal(s.awaiting_collection_halalas)}</span><span>مصروف: {riyal(s.paid_halalas)}</span><strong>الرصيد المستحق: {riyal(s.balance_halalas)} ر.س</strong>
+        </div>
+        {a.suppliers.length > 0 && <p style={{ fontSize: 12, margin: '4px 0' }}>الموردون المنسوبون: {a.suppliers.map((y: any) => `${y.name} (${pct(y.rate_bp)})`).join('، ')}</p>}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          {['pending', 'trial', 'trial_ended', 'active', 'suspended'].includes(a.effective_status) && <>
+            <input placeholder="% المبيعات" inputMode="decimal" value={x.sales} onChange={e => setFF(a.id, 'sales', e.target.value)} style={{ width: 95 }} />
+            <input placeholder="% جذب الموردين" inputMode="decimal" value={x.supplier} onChange={e => setFF(a.id, 'supplier', e.target.value)} style={{ width: 115 }} />
+            <input placeholder="ملاحظة / سبب" value={x.note} onChange={e => setFF(a.id, 'note', e.target.value)} style={{ maxWidth: 180 }} /></>}
+          {a.status === 'pending' && <><button className="btn" style={{ padding: '4px 10px' }} disabled={!x.sales || !x.supplier} title="حدّد النسبتين أولاً" onClick={() => decide(a, 'approve', 'تم الاعتماد وبدأت فترة التجربة')}>اعتماد وبدء التجربة</button>
+            <button className="btn ghost" style={{ padding: '4px 10px' }} onClick={() => decide(a, 'reject', 'تم رفض الطلب')}>رفض</button></>}
+          {['trial', 'suspended'].includes(a.status) && <button className="btn" style={{ padding: '4px 10px' }} onClick={() => decide(a, 'continue', 'تم اعتماد استمرار المسوّق')}>استمرار بعد التجربة</button>}
+          {['trial', 'active'].includes(a.status) && <button className="btn ghost" style={{ padding: '4px 10px' }} disabled={x.note.trim().length < 3} onClick={() => decide(a, 'suspend', 'تم الإيقاف المؤقت')}>إيقاف مؤقت</button>}
+          {a.status === 'suspended' && <button className="btn ghost" style={{ padding: '4px 10px' }} onClick={() => decide(a, 'reactivate', 'تمت إعادة التفعيل')}>إعادة تفعيل</button>}
+          {['trial', 'active', 'suspended'].includes(a.status) && <>
+            <button className="btn ghost" style={{ padding: '4px 10px' }} disabled={!x.sales && !x.supplier} onClick={() => decide(a, 'set_rate', 'تم تحديث النسب (تسري على الطلبات القادمة)')}>تحديث النسب</button>
+            <button className="btn ghost" style={{ padding: '4px 10px', color: '#b00020' }} disabled={x.note.trim().length < 3} onClick={() => decide(a, 'terminate', 'تم إنهاء الاتفاقية')}>إلغاء العقد</button></>}
+          <button className="btn ghost" style={{ padding: '4px 10px' }} onClick={() => showOrders(a.id)}>{open === a.id ? 'إخفاء العمليات' : 'العمليات والأرباح'}</button>
+        </div>
+        {['trial', 'active'].includes(a.status) && <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+          <select value={x.sup} onChange={e => setFF(a.id, 'sup', e.target.value)}><option value="">ربط مورد جذبه المسوّق…</option>{suppliers.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>
+          <button className="btn ghost" style={{ padding: '4px 10px' }} disabled={!x.sup} onClick={() => linkSupplier(a)}>ربط</button>
+        </div>}
+        {s.balance_halalas > 0 && <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+          <input placeholder="مبلغ الدفعة (ر.س)" inputMode="decimal" value={x.payout} onChange={e => setFF(a.id, 'payout', e.target.value)} style={{ maxWidth: 140 }} />
+          <input placeholder="مرجع التحويل" value={x.ref} onChange={e => setFF(a.id, 'ref', e.target.value)} style={{ maxWidth: 160 }} />
+          <button className="btn" style={{ padding: '4px 10px' }} disabled={!x.payout || x.ref.trim().length < 3} onClick={() => payout(a)}>تسجيل دفعة للمسوّق</button>
+        </div>}
+        {open === a.id && <div style={{ marginTop: 8 }}>
+          <Table head={['الطلب', 'التاريخ', 'المصدر', 'المورد', 'قيمة الطلب', 'عمولة رواء', 'النسبة', 'ربح المسوّق', 'الحالة', '']}>
+            {orders.map(o => <tr key={o.order_id + o.side}><td style={td} dir="ltr">{String(o.order_id).slice(0, 8)}</td><td style={td}>{fmtDate(o.created_at)}</td>
+              <td style={td}>{SIDE[o.side]}</td><td style={td}>{o.supplier ?? '—'}</td><td style={td}>{riyal(o.payable_halalas)}</td><td style={td}>{riyal(o.rawaa_commission_halalas)}</td>
+              <td style={td}>{pct(o.rate_bp)}</td><td style={td}><strong>{riyal(o.earning_halalas)}</strong></td><td style={td}>{EARN_STATE[o.state] ?? o.state}{o.void_reason ? ` — ${o.void_reason}` : ''}</td>
+              <td style={td}>{o.void_reason && o.void_reason !== 'خارج مدة سريان الاتفاقية'
+                ? <button className="btn ghost" style={{ padding: '2px 6px' }} onClick={() => voidOrder(a, o, true)}>استعادة</button>
+                : o.state !== 'void' && <button className="btn ghost" style={{ padding: '2px 6px', color: '#b00020' }} onClick={() => voidOrder(a, o, false)}>إلغاء (تحايل)</button>}</td></tr>)}
+          </Table>
+          {orders.length === 0 && <p className="muted">لا توجد عمليات.</p>}
+        </div>}
+      </Card>) })}
+  </>
 }

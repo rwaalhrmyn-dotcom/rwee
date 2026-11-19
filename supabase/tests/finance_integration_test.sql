@@ -751,6 +751,97 @@ begin
   perform test.reset();
 end $$;
 
+-- ================================================================ 18. commission marketers (affiliates)
+do $$
+declare c jsonb; r jsonb; aff uuid; code text; p uuid := test.get('p1')::uuid; o uuid; o_self uuid; t text; m jsonb; n bigint; ok boolean;
+begin
+  perform test.mk_user('00000000-0000-0000-0000-0000000000e1', 'marketer@rawaa.test', '+966500000041');
+  c := public.current_affiliate_contract();
+  perform test.ok('18 affiliates', 'electronic marketer contract is published with a hash', c->>'body_sha256' is not null and c->>'body_ar' like '%فترة التجربة%');
+  perform test.as_user('00000000-0000-0000-0000-0000000000e1');
+  begin perform public.affiliate_register('{"full_name":"مسوق تجريبي"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', false);
+    perform test.ok('18 affiliates', 'registration requires explicit agreement', false);
+  exception when others then perform test.ok('18 affiliates', 'registration requires explicit agreement', sqlerrm ilike '%agreement%', sqlerrm); end;
+  r := public.affiliate_register('{"full_name":"مسوق تجريبي","phone":"0500000041","channels":"انستقرام"}', c->>'version_id', c->>'body_sha256', 'مسوق تجريبي', true);
+  aff := (r->>'id')::uuid; code := r->>'code';
+  perform test.ok('18 affiliates', 'e-mail registration creates a pending marketer with a referral code',
+    r->>'status' = 'pending' and code ~ '^RW', r::text);
+  perform test.reset();
+  perform test.ok('18 affiliates', 'marketer identity is the verified e-mail', (select email from public.affiliates where id=aff) = 'marketer@rawaa.test');
+  perform test.ok('18 affiliates', 'signed contract recorded (version, hash, signer)',
+    exists(select 1 from private.affiliate_contract_acceptances where affiliate_id=aff and body_sha256=c->>'body_sha256'));
+  perform test.ok('18 affiliates', 'link does not work before approval', not public.track_affiliate_click(code));
+  perform test.as_user('00000000-0000-0000-0000-0000000000a0');
+  begin perform public.admin_affiliate_decide(aff, 'approve', null, null, null);
+    perform test.ok('18 affiliates', 'approval requires both commission rates', false);
+  exception when others then perform test.ok('18 affiliates', 'approval requires both commission rates', sqlerrm ilike '%both commission rates%', sqlerrm); end;
+  perform public.admin_affiliate_decide(aff, 'approve', null, 2000, 1500);
+  perform test.reset();
+  perform test.ok('18 affiliates', 'approval starts a one-month trial with the two rates',
+    (select status='trial' and sales_rate_bp=2000 and supplier_rate_bp=1500 and trial_ends_at::date = (now() + interval '30 days')::date from public.affiliates where id=aff));
+  perform test.ok('18 affiliates', 'referral link visits are tracked', public.track_affiliate_click(code));
+  -- customer order through the link
+  perform test.as_user('00000000-0000-0000-0000-0000000000c2');
+  o := public.place_order(jsonb_build_array(jsonb_build_object('product_id',p,'quantity',1)), 'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'عميل محال', '0500000099', gen_random_uuid(), '{}'::jsonb, 0);
+  t := public.attach_order_affiliate(o, code);
+  perform public.set_order_delivery(o, 'oto');
+  perform public.choose_order_payment_method(o, 'cod');
+  perform test.reset();
+  perform test.ok('18 affiliates', 'order placed through the link is attributed with the sales rate', t = 'attributed'
+    and (select affiliate_id=aff and affiliate_rate_bp=2000 from public.orders where id=o), t);
+  -- self referral
+  perform test.as_user('00000000-0000-0000-0000-0000000000e1');
+  o_self := public.place_order(jsonb_build_array(jsonb_build_object('product_id',p,'quantity',1)), 'makkah', 'حي العزيزية، شارع 1، مبنى 2', 'أنا', '0500000041', gen_random_uuid(), '{}'::jsonb, 0);
+  t := public.attach_order_affiliate(o_self, code);
+  m := public.my_affiliate();
+  perform test.reset();
+  perform test.ok('18 affiliates', 'self-referral is blocked and flagged', t = 'self_referral_blocked'
+    and exists(select 1 from private.finance_alerts where kind='affiliate_self_referral'), t);
+  perform test.ok('18 affiliates', 'no profit yet -> marketer is owed nothing',
+    (m->'summary'->>'orders')::int = 1 and (m->'summary'->>'balance_halalas')::bigint = 0 and m->'orders'->0->>'state' = 'pending', m->>'summary');
+  -- order completed and paid -> commission accrues, but not payable until Rawaa collects from the supplier
+  perform test.as_user('00000000-0000-0000-0000-0000000000b1');
+  perform public.supplier_confirm_order_payment(o, null);
+  perform test.reset();
+  perform test.complete_order(o, now());
+  select coalesce(sum(total_commission_halalas),0) into n from public.commission_entries where order_id=o;
+  perform test.as_user('00000000-0000-0000-0000-0000000000e1');
+  m := public.my_affiliate();
+  perform test.reset();
+  perform test.ok('18 affiliates', 'earning = sales rate x Rawaa net commission, awaiting collection from supplier',
+    n > 0 and (m->'orders'->0->>'earning_halalas')::bigint = round(n * 0.2) and m->'orders'->0->>'state' = 'awaiting_collection'
+    and (m->'summary'->>'balance_halalas')::bigint = 0, format('commission=%s %s', n, m->'orders'->0));
+  perform test.as_user('00000000-0000-0000-0000-0000000000a0');
+  begin perform public.admin_record_affiliate_payout(aff, 100, 'TRX-1', null);
+    perform test.ok('18 affiliates', 'no payout before Rawaa has collected its commission', false);
+  exception when others then perform test.ok('18 affiliates', 'no payout before Rawaa has collected its commission', sqlerrm ilike '%exceeds the payable balance%', sqlerrm); end;
+  -- supplier side
+  begin perform public.admin_set_supplier_affiliate(test.get('s1')::uuid, aff);
+    ok := true; exception when others then ok := false; end;
+  perform test.reset();
+  perform test.ok('18 affiliates', 'Rawaa can link a supplier brought by the marketer', ok
+    and (select affiliate_rate_bp from public.suppliers where id=test.get('s1')::uuid) = 1500);
+  perform test.as_user('00000000-0000-0000-0000-0000000000e1');
+  m := public.my_affiliate();
+  perform test.reset();
+  perform test.ok('18 affiliates', 'supplier-referral side counts the referred supplier''s orders',
+    (m->'summary'->>'referred_suppliers')::int = 1 and (m->'summary'->>'supplier_orders')::int >= 1, m->>'summary');
+  -- fraud void + termination
+  perform test.as_user('00000000-0000-0000-0000-0000000000a0');
+  perform public.admin_void_affiliate_order(o, 'طلب مشبوه');
+  begin perform public.admin_affiliate_decide(aff, 'terminate', null, null, null);
+    perform test.ok('18 affiliates', 'termination requires a reason', false);
+  exception when others then perform test.ok('18 affiliates', 'termination requires a reason', sqlerrm ilike '%reason%', sqlerrm); end;
+  perform public.admin_affiliate_decide(aff, 'terminate', 'إنهاء بعد فترة التجربة', null, null);
+  perform test.reset();
+  perform test.ok('18 affiliates', 'voided order earns nothing', (select earning_halalas = 0 and state = 'void' from private.affiliate_order_lines(aff) where order_id=o and side='sales'));
+  perform test.ok('18 affiliates', 'terminated marketer''s link stops working', not public.track_affiliate_click(code));
+  begin perform test.as_user('00000000-0000-0000-0000-0000000000c1'); perform public.admin_affiliates();
+    perform test.ok('18 affiliates', 'customers cannot see the marketers list', false);
+  exception when others then perform test.ok('18 affiliates', 'customers cannot see the marketers list', sqlerrm ilike '%forbidden%', sqlerrm); end;
+  perform test.reset();
+end $$;
+
 -- ---------------------------------------------------------------- report
 select test.reset();
 \echo
